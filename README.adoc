@@ -1,12 +1,14 @@
 = Vert.x Kafka Client examples
 
-
-
-== Monitoring dashboard
+== Process Monitoring dashboard event push example
 DashboardVerticle : Kafka consumer API to consume the metrics and send them to a monitoring dashboard Event Bus publish with websocket.
+
 MetricsVerticle : example is assumed to be a kafka producer metrics in Json format.
 
-
+```console
+mvn clean package
+java -jar ./target/kafka-examples-3.5.0-fat.jar
+```
 Run the `MainVerticle` main method and then open your browser at http://localhost:8080/
 
 In real usage the Kafka broker would probably be managed externally and the `DashboardVerticle` /
