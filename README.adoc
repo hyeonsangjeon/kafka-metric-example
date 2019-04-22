@@ -4,6 +4,7 @@
 DashboardVerticle : Kafka consumer API to consume the metrics and send them to a monitoring dashboard Event Bus publish with websocket.
 
 MetricsVerticle : example is assumed to be a kafka producer metrics in Json format.
+.
 
 ```console
 mvn clean package
