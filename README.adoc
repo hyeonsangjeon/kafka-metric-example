@@ -1,16 +1,24 @@
-= Vert.x Kafka Client examples
+=  Analytics Platform 시스템 예제
 
-== Process Monitoring dashboard event push example
-DashboardVerticle : Kafka consumer API to consume the metrics and send them to a monitoring dashboard Event Bus publish with websocket.
+== Event push Plarform Monitoring dashboard
 
-MetricsVerticle : example is assumed to be a kafka producer metrics in Json format.
 
+DashboardVerticle : 실시간 Analytics Platform 시스템 화면 예제
+MetricsVerticle : Application OS 자원 모니터링 crawlering data를 Kafka에 producing 예제
+MainVerticle : Kafka Broker 예제
+
+
+How to use
 ```console
 mvn clean package
 java -jar ./target/kafka-examples-3.5.0-fat.jar
 ```
-Run the `MainVerticle` main method and then open your browser at http://localhost:8080/
 
-In real usage the Kafka broker would probably be managed externally and the `DashboardVerticle` /
-`MetricsVerticle` executed separately with their own configuration.
+```console
+http://localhost:8080/
+```
 
+
+- DashboardVerticle : Kafka consumer API to consume the metrics and send them to a monitoring dashboard Event Bus publish with websocket.
+- MetricsVerticle : example is assumed to be a kafka producer metrics in Json format.
+- MainVerticle : Kafka Broker Example
