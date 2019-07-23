@@ -21,17 +21,17 @@ public class DashboardVerticle extends AbstractVerticle {
 
 
   public static void main(String[] args) {
-
-    Vertx vertx = Vertx.vertx();
-    JsonObject consumerConfig = new JsonObject();
-    consumerConfig.put("auto.offset.reset","latest");
-    consumerConfig.put("bootstrap.servers","127.0.0.1:9092");
-    consumerConfig.put("enable.auto.commit","false");
-    consumerConfig.put("group.id","the_group");
-    consumerConfig.put("client.id","the_client");
-    vertx.deployVerticle(DashboardVerticle.class.getName(),
-            new DeploymentOptions().setConfig(consumerConfig));
-    System.out.println("DashboardVerticle RUN " );
+//
+//    Vertx vertx = Vertx.vertx();
+//    JsonObject consumerConfig = new JsonObject();
+//    consumerConfig.put("auto.offset.reset","latest");
+//    consumerConfig.put("bootstrap.servers","127.0.0.1:9092");
+//    consumerConfig.put("enable.auto.commit","false");
+//    consumerConfig.put("group.id","the_group");
+//    consumerConfig.put("client.id","the_client");
+//    vertx.deployVerticle(DashboardVerticle.class.getName(),
+//            new DeploymentOptions().setConfig(consumerConfig));
+//    System.out.println("DashboardVerticle RUN " );
 
   }
 
