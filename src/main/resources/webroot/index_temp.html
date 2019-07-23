@@ -1,0 +1,88 @@
+<!--
+  ~ Copyright 2011-2012 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<html>
+<head>
+  <script src="jquery-1.11.2.min.js"></script>
+  <script src="sockjs.min.js"></script>
+  <script src="highcharts.js"></script></head>
+  <script src="vertxbus.js"></script>
+  <script src="charts.js"></script>
+<body>
+  <h1>실시간 Metric정보를 이용한 RESTAPI서버의 Scale In/out 예시</h1>
+  <h5>App백앤드 서버들은 각 물리서버의 프로세스ID(HostName@PID)를 키값으로 백엔드의 상태정보를 Kafka에 Publishing합니다.</h5>
+  <h5>예를들어, Spark Stream 분석 Worker에서 백엔드 프로세스의 단위시간당 자원점유율이 일정 수준 높아지거나 TPS의 유입이 증가/감소하면 backend서버 scaleout에 해당하는 eventMessage를 Redis에 적재합니다.</h5>
+  <h5>Redis의 backend스케일아웃 정보를 주기적으로 감지하는 스케쥴러는 Hazelcast로 Scaleout을 Publishing합니다.</h5>
+  <h5>Backend서버의 오케스트레이션을 담당하는 서비스 스케쥴러는 Hazelcast의 정보를 구독한뒤 백앤드 서버의 Scaleout/In을 동적으로 진행합니다.</h5>
+  <h5></h5>
+
+  <div class="news">Latest CPU: <span id="CPU-val"></span>&nbsp;|&nbsp;Latest mem: <span id="Mem-val"></span></div>
+
+
+  <div id="container"></div>
+
+
+  <script>
+
+    var charts = new Charts();
+
+    var eb = new vertx.EventBus("http://" + location.host + "/eventbus");
+    eb.onopen = function() {
+      eb.registerHandler("dashboard", function(dashboard) {
+        var x = (new Date()).getTime(); // current time
+
+//        console.log(dashboard);
+
+        for (var id in dashboard) {
+          if (dashboard.hasOwnProperty(id)) {
+            var metrics = dashboard[id];
+            for (var metric in metrics) {
+              if (metrics.hasOwnProperty(metric)) {
+                  console.log("metric : "+metric);
+                var chart = charts.getChart(metric);
+                var y = metrics[metric];
+                $("#" + metric + "-val").html(y);
+                var serie = chart.getSerie(id, function() {
+                  var data = [], time = (new Date()).getTime(),i ;
+                  for (i = -19; i <= 0; i += 1) {
+                    data.push({
+                      x: time + i * 1000,
+                      y: y
+                    });
+                  }
+                  return data;
+                });
+                serie.addPoint([x, y], false, true);
+              }
+            }
+          }
+        }
+
+        // Remove metrics
+        charts.removeSeries(function(id) {
+          return dashboard[id] === undefined;
+        });
+
+        //
+        charts.redraw();
+      });
+    };
+
+  </script>
+
+
+</body>
+</html>
