@@ -3,9 +3,9 @@
 == Event push Plarform Monitoring dashboard
 
 
-DashboardVerticle : 실시간 Analytics Platform 시스템 화면 예제
-MetricsVerticle : Application OS 자원 모니터링 crawlering data를 Kafka에 producing 예제
-MainVerticle : Kafka Broker 예제
+- DashboardVerticle : 실시간 Analytics Platform 시스템 화면 예제
+- MetricsVerticle : Application OS 자원 모니터링 crawlering data를 Kafka에 producing 예제
+- MainVerticle : Kafka Broker 예제
 
 
 How to use
