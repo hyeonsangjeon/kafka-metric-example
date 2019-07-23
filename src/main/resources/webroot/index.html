@@ -22,7 +22,12 @@
   <script src="vertxbus.js"></script>
   <script src="charts.js"></script>
 <body>
-  <h1>Metrics dashboard</h1>
+  <h1>실시간 Metric정보를 이용한 RESTAPI서버의 Scale In/out 예시</h1>
+  <h5>App백앤드 서버들은 각 물리서버의 프로세스ID(HostName@PID)를 키값으로 백엔드의 상태정보를 Kafka에 Publishing합니다.</h5>
+  <h5>예를들어, Spark Stream 분석 Worker에서 백엔드 프로세스의 단위시간당 자원점유율이 일정 수준 높아지거나 TPS의 유입이 증가/감소하면 backend서버 scaleout에 해당하는 eventMessage를 Redis에 적재합니다.</h5>
+  <h5>Redis의 backend스케일아웃 정보를 주기적으로 감지하는 스케쥴러는 Hazelcast로 Scaleout을 Publishing합니다.</h5>
+  <h5>Backend서버의 오케스트레이션을 담당하는 서비스 스케쥴러는 Hazelcast의 정보를 구독한뒤 백앤드 서버의 Scaleout/In을 동적으로 진행합니다.</h5>
+  <h5></h5>
 
   <div class="news">Latest CPU: <span id="CPU-val"></span>&nbsp;|&nbsp;Latest mem: <span id="Mem-val"></span></div>
 

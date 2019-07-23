@@ -6,6 +6,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.example.kafka.Runner;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 
 import java.io.File;
@@ -16,6 +17,8 @@ public class MainVerticle extends AbstractVerticle {
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     vertx.deployVerticle(new MainVerticle());
+//    Runner.runExample(MainVerticle.class);
+    System.out.println("MainVerticle RUN " );
   }
 
   private KafkaCluster kafkaCluster;
@@ -24,7 +27,7 @@ public class MainVerticle extends AbstractVerticle {
   public void start() throws Exception {
 
     // Kafka setup for the example
-    File dataDir = Testing.Files.createTestingDirectory("cluster");
+    File dataDir = Testing.Files.createTestingDirectory("/cluster");
     dataDir.deleteOnExit();
     kafkaCluster = new KafkaCluster()
       .usingDirectory(dataDir)
@@ -33,20 +36,6 @@ public class MainVerticle extends AbstractVerticle {
       .deleteDataPriorToStartup(true)
       .startup();
 
-    // Deploy the dashboard
-    JsonObject consumerConfig = new JsonObject((Map) kafkaCluster.useTo()
-      .getConsumerProperties("the_group", "the_client", OffsetResetStrategy.LATEST));
-    vertx.deployVerticle(
-      DashboardVerticle.class.getName(),
-      new DeploymentOptions().setConfig(consumerConfig)
-    );
-
-    JsonObject producerConfig = new JsonObject((Map) kafkaCluster.useTo()
-      .getProducerProperties("the_producer"));
-    vertx.deployVerticle(
-      MetricsVerticle.class.getName(),
-      new DeploymentOptions().setConfig(producerConfig).setInstances(1)
-    );
   }
 
   @Override
