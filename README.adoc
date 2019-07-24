@@ -18,8 +18,8 @@ java -jar ./target/kafka-examples-3.5.0-fat.jar
 http://localhost:8080/
 ```
 
+:imagesdir: resources/pic/example_dashboard.png[]
 
-![example_dashboard](https://github.com/hyeonsangjeon/kafka-metric-example/blob/master/src/main/resources/pic/example_dashboard.png?raw=true)
 
 - DashboardVerticle : Kafka consumer API to consume the metrics and send them to a monitoring dashboard Event Bus publish with websocket.
 - MetricsVerticle : example is assumed to be a kafka producer metrics in Json format.
