@@ -1,7 +1,7 @@
 # Curated model input/output
 
 This is one manually reviewed, synthetic benchmark item captured before the
-planned demo resource removal. The three responses are retained because they
+demo resource was removed. The three responses are retained because they
 make the fixed/default/advanced routing behavior concrete. Request, trace,
 evaluation, tenant, subscription, and resource IDs were removed.
 

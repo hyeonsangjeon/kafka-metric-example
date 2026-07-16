@@ -1,9 +1,9 @@
 # Foundry live demo evidence — 2026-07-16 UTC
 
 This directory freezes the useful, public parts of the live Microsoft Foundry
-demo before its dedicated Azure resources are released. It covers the three
-execution profiles, Kafka telemetry, evaluation, managed tracing, Azure Monitor
-usage, infrastructure settings, screenshots, and cleanup verification.
+demo captured before its dedicated Azure resources were released. It covers the
+three execution profiles, Kafka telemetry, evaluation, managed tracing, Azure
+Monitor usage, infrastructure settings, screenshots, and cleanup verification.
 
 The source was release `v1.1.0` at commit
 `99cc14ca05e3e9a5d049d4bf080b3a3d4b732cc7`, running on an Apple M1 host with
@@ -70,10 +70,10 @@ reviewed synthetic input/output triplet is in
   request/token series. It explicitly does not interpret them as user request
   counts. Cost Management returned no rows at capture time, which means billing
   data was not yet available—not that cost was zero.
-- [Cleanup summary](data/cleanup-summary.json) is the current deletion gate and
-  becomes the authoritative purge record after its post-cleanup verification is
-  filled in. Provider registrations are subscription-scoped and intentionally
-  retained.
+- [Cleanup summary](data/cleanup-summary.json) is the authoritative deletion
+  and purge record. Post-cleanup verification found no resource group,
+  soft-deleted Foundry account, or scoped role assignment. Provider
+  registrations are subscription-scoped and intentionally retained.
 
 Use [the demo runbook](../../demo-runbook.md) to reproduce the flow and
 [the API examples](../../api-examples.md) for the request, response, SSE, and
@@ -101,9 +101,9 @@ Deliberately excluded:
 The disposable demo resource, project, workspace, Application Insights, and
 deployment **names** are intentionally retained so the inventory and cleanup
 record can be audited. Endpoint URLs and Azure resource/subscription/tenant/
-principal IDs are not retained. Local auth was disabled. The environment will
-be removed only after this evidence is published; the live gate and eventual
-deletion result are recorded in [cleanup-summary.json](data/cleanup-summary.json).
+principal IDs are not retained. Local auth was disabled. This evidence was
+published before the environment was deleted and the Foundry account purged;
+the verified result is in [cleanup-summary.json](data/cleanup-summary.json).
 
 See [manifest.json](manifest.json) for provenance and `checksums.sha256` for
 artifact integrity.

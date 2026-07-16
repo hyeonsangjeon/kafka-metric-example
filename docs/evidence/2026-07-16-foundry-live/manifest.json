@@ -48,5 +48,6 @@
     "endpointUrlsExcluded": true,
     "demoResourceNamesRetainedForCleanupProvenance": true
   },
-  "cleanupStatus": "data/cleanup-summary.json"
+  "cleanupStatus": "data/cleanup-summary.json",
+  "cleanupVerifiedAtUtc": "2026-07-16T17:15:44Z"
 }
