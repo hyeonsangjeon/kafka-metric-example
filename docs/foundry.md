@@ -271,10 +271,11 @@ Insights ingested spans for all three emitted trace IDs with content capture
 disabled.
 
 The environment was intentionally disposable. Its evidence was published before
-cleanup; the current gate and eventual deletion/purge result are recorded in
+cleanup; the completed deletion/purge result is recorded in
 [cleanup-summary.json](evidence/2026-07-16-foundry-live/data/cleanup-summary.json).
 
 This record proves connectivity and integration, not production readiness or a
-general quality claim. The included broker is local and unauthenticated, public
-Foundry endpoints remain enabled for the demo, and the small synthetic evaluation
-set cannot replace a representative workload of at least 100 prompts.
+general quality claim. The included broker is local and unauthenticated. The
+public Foundry endpoints that were enabled at capture time were deleted after
+evidence publication, and the small synthetic evaluation set cannot replace a
+representative workload of at least 100 prompts.

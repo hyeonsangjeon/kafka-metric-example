@@ -1,14 +1,36 @@
 {
-  "status": "awaiting-evidence-publication",
+  "status": "completed",
   "resourceGroup": "rg-kafka-router-demo",
   "foundryAccount": "aif-kafka-router-hjeon",
+  "evidencePublication": {
+    "pullRequest": 10,
+    "mergedAtUtc": "2026-07-16T17:12:39Z",
+    "mergeCommit": "40f453ccf383c3eec2f7837f160b06d417c4cc1a"
+  },
   "dryRun": {
     "completedAtUtc": "2026-07-16T16:50:00Z",
     "resourceGroupDeletion": true,
     "foundryAccountPurge": true,
     "subscriptionProviderRegistrationsRetained": true
   },
-  "apply": null,
-  "postCleanupVerification": null,
-  "gate": "The evidence commit must be pushed and merged before cleanup apply is allowed."
+  "apply": {
+    "resourceGroupDeletionAcceptedAtUtc": "2026-07-16T17:13:17Z",
+    "completedBeforeUtc": "2026-07-16T17:15:44Z",
+    "resourceGroupDeletion": true,
+    "foundryAccountPurge": true,
+    "exitCode": 0
+  },
+  "postCleanupVerification": {
+    "completedAtUtc": "2026-07-16T17:15:44Z",
+    "resourceGroupExists": false,
+    "softDeletedFoundryAccountMatches": 0,
+    "scopedRoleAssignments": 0,
+    "providerRegistrations": {
+      "Microsoft.CognitiveServices": "Registered",
+      "Microsoft.Insights": "Registered",
+      "Microsoft.OperationalInsights": "Registered"
+    },
+    "subscriptionProviderRegistrationsRetained": true
+  },
+  "gate": "Satisfied: evidence PR 10 merged before cleanup apply; this completion record follows that verified sequence."
 }
