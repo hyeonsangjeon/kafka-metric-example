@@ -5,7 +5,7 @@ RUN npm ci
 COPY web/ ./
 RUN npm run build
 
-FROM maven:3.9.11-eclipse-temurin-21 AS java-build
+FROM maven:3.9.15-eclipse-temurin-26 AS java-build
 WORKDIR /workspace/app
 COPY app/pom.xml ./
 RUN mvn --batch-mode --no-transfer-progress -DskipTests package \
