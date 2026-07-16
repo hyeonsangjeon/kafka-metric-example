@@ -14,7 +14,7 @@ COPY app/src ./src
 COPY --from=web-build /workspace/web/dist ./src/main/resources/webroot
 RUN mvn --batch-mode --no-transfer-progress -DskipTests package
 
-FROM eclipse-temurin:21-jre-ubi10-minimal
+FROM eclipse-temurin:25-jre-ubi10-minimal
 LABEL org.opencontainers.image.source="https://github.com/hyeonsangjeon/kafka-metric-example" \
       org.opencontainers.image.title="Foundry Stream Lab" \
       org.opencontainers.image.description="Privacy-safe Microsoft Foundry workload telemetry over Kafka and Vert.x" \
