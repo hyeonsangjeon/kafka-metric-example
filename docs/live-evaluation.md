@@ -1,10 +1,12 @@
 # Live Model Router evaluation — 2026-07-16
 
-This record contains only aggregate, non-response results from a live East US 2
-Microsoft Foundry run. The synthetic prompt dataset is committed for
-reproducibility; raw model responses, per-request result records, request IDs,
-and cloud account identifiers remain in the ignored local
-`tools/eval/results/` directory and are not committed.
+This record contains aggregate results from a live East US 2 Microsoft Foundry
+run. The synthetic prompt dataset is committed for reproducibility. Bulk model
+responses, per-request raw records, request IDs, endpoint URLs, and Azure
+subscription/tenant/evaluation locator IDs remain excluded. Disposable demo
+resource names are retained for cleanup provenance, and one manually reviewed
+synthetic input/output triplet is retained in the
+[public evidence bundle](evidence/2026-07-16-foundry-live/README.md).
 
 ## Method
 

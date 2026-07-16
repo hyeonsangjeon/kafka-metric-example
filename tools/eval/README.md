@@ -37,10 +37,10 @@ az login
 
 export AZURE_MODEL_ROUTER_ENDPOINT="https://YOUR_RESOURCE.services.ai.azure.com"
 export AZURE_OPENAI_ENDPOINT="https://YOUR_RESOURCE.services.ai.azure.com"
-export AZURE_MODEL_ROUTER_BASIC_DEPLOYMENT="model-router-basic"
-export AZURE_MODEL_ROUTER_ADVANCED_DEPLOYMENT="model-router-advanced"
-export AZURE_BASELINE_DEPLOYMENT="gpt-5-mini-fixed"
-export AZURE_JUDGE_DEPLOYMENT="gpt-5-mini-judge"
+export AZURE_MODEL_ROUTER_BASIC_DEPLOYMENT="model-router-default"
+export AZURE_MODEL_ROUTER_ADVANCED_DEPLOYMENT="model-router-cost"
+export AZURE_BASELINE_DEPLOYMENT="gpt-5.4-mini"
+export AZURE_JUDGE_DEPLOYMENT="gpt-5.4-mini"
 
 python3 tools/eval/eval.py run --profile basic
 python3 tools/eval/eval.py run --profile advanced

@@ -9,6 +9,17 @@ It keeps the useful idea—`event -> Kafka -> projection -> live dashboard`—an
 replaces the 2019-era runtime and vendored admin theme with a focused Microsoft
 Foundry routing, evaluation, and observability lab.
 
+![Live Advanced Cost routing result](docs/evidence/2026-07-16-foundry-live/screenshots/live-foundry-advanced-cost-desktop.jpg)
+
+The disposable 2026-07-16 Foundry environment was captured before cleanup.
+Start with the [live evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md),
+follow [the presenter runbook](docs/demo-runbook.md), or inspect the
+[HTTP input/output examples](docs/api-examples.md). The bundle includes actual
+fixed/default/advanced screenshots, sanitized routing and token telemetry,
+managed tracing and Evaluation aggregates, Azure Monitor usage, 12 evaluation
+charts, one curated synthetic model I/O example, checksums, and the resource
+cleanup record.
+
 ## Why this exists
 
 AI failures and streaming failures often look similar from a distance. This lab
@@ -182,7 +193,8 @@ wrapper around Microsoft's Model Router Auto Evaluation toolkit under
 `tools/eval/`, and a content-redacted managed tracing smoke test under
 `tools/foundry/`. See [the Foundry guide](docs/foundry.md) for the complete live
 workflow and the boundaries of the recorded verification; the aggregate benchmark
-is recorded in [the live evaluation note](docs/live-evaluation.md).
+is recorded in [the live evaluation note](docs/live-evaluation.md), with its
+sanitized artifacts in the [evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md).
 
 ## Privacy boundary
 

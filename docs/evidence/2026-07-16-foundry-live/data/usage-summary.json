@@ -1,0 +1,45 @@
+{
+  "capturedAtUtc": "2026-07-16T16:50:00Z",
+  "metricWindow": "previous 2 days",
+  "warning": "Azure Monitor metrics include evaluation, judge, retry, router control-plane accounting, smoke, and dashboard calls. They are not end-user request counts and token series may use different aggregation semantics.",
+  "modelRequests": [
+    {"deployment": "gpt-5.4-mini", "model": "gpt-5.4-mini", "version": "2026-03-17", "total": 233},
+    {"deployment": "model-router-default", "model": "grok-4-1-fast-reasoning", "version": "1", "total": 57},
+    {"deployment": "model-router-cost", "model": "gpt-5.4-nano", "version": "2026-03-17", "total": 13},
+    {"deployment": "model-router-default", "model": "gpt-5-mini", "version": "2025-08-07", "total": 6},
+    {"deployment": "model-router-default", "model": "model-router", "version": "2025-11-18", "total": 5},
+    {"deployment": "model-router-cost", "model": "model-router", "version": "2025-11-18", "total": 5},
+    {"deployment": "model-router-cost", "model": "gpt-5.4-mini", "version": "2026-03-17", "total": 4},
+    {"deployment": "model-router-default", "model": "gpt-5.4", "version": "2026-03-05", "total": 2},
+    {"deployment": "model-router-default", "model": "gpt-5.4-mini", "version": "2026-03-17", "total": 2}
+  ],
+  "tokenMetrics": {
+    "inputTokens": [
+      {"deployment": "gpt-5.4-mini", "model": "gpt-5.4-mini", "total": 127340},
+      {"deployment": "model-router-default", "model": "grok-4-1-fast-reasoning", "total": 780},
+      {"deployment": "model-router-default", "model": "gpt-5-mini", "total": 250},
+      {"deployment": "model-router-cost", "model": "gpt-5.4-nano", "total": 220},
+      {"deployment": "model-router-default", "model": "gpt-5.4", "total": 106}
+    ],
+    "outputTokens": [
+      {"deployment": "gpt-5.4-mini", "model": "gpt-5.4-mini", "total": 30613},
+      {"deployment": "model-router-default", "model": "grok-4-1-fast-reasoning", "total": 7740},
+      {"deployment": "model-router-default", "model": "gpt-5-mini", "total": 4148},
+      {"deployment": "model-router-cost", "model": "gpt-5.4-nano", "total": 2185},
+      {"deployment": "model-router-default", "model": "gpt-5.4", "total": 714},
+      {"deployment": "model-router-cost", "model": "gpt-5.4-mini", "total": 86}
+    ],
+    "totalTokens": [
+      {"deployment": "gpt-5.4-mini", "model": "gpt-5.4-mini", "total": 158021},
+      {"deployment": "model-router-default", "model": "grok-4-1-fast-reasoning", "total": 19191},
+      {"deployment": "model-router-default", "model": "gpt-5-mini", "total": 4398},
+      {"deployment": "model-router-cost", "model": "gpt-5.4-nano", "total": 1281},
+      {"deployment": "model-router-default", "model": "gpt-5.4", "total": 820}
+    ]
+  },
+  "costManagement": {
+    "windowUtc": "2026-07-15T00:00:00Z/2026-07-17T00:00:00Z",
+    "actualCostRows": 0,
+    "interpretation": "No cost row was available at capture time. This indicates billing-data delay, not a zero-cost claim."
+  }
+}
