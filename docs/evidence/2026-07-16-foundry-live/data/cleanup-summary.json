@@ -1,0 +1,14 @@
+{
+  "status": "awaiting-evidence-publication",
+  "resourceGroup": "rg-kafka-router-demo",
+  "foundryAccount": "aif-kafka-router-hjeon",
+  "dryRun": {
+    "completedAtUtc": "2026-07-16T16:50:00Z",
+    "resourceGroupDeletion": true,
+    "foundryAccountPurge": true,
+    "subscriptionProviderRegistrationsRetained": true
+  },
+  "apply": null,
+  "postCleanupVerification": null,
+  "gate": "The evidence commit must be pushed and merged before cleanup apply is allowed."
+}

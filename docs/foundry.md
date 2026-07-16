@@ -22,9 +22,9 @@ propagate.
 | --- | --- | --- |
 | Responses API | Yes | Stateless calls with `store(false)`. |
 | Model Router | Yes | Fixed vs default Balanced vs advanced Cost/Quality deployments. |
-| Managed tracing | Yes | OpenTelemetry spans go to a project-connected Application Insights resource with prompt/response capture disabled. |
+| Managed tracing | Yes | `tools/foundry/live_smoke.py` sends OpenTelemetry spans to project-connected Application Insights with prompt/response capture disabled; this does not imply automatic tracing for every Java app call. |
 | Model Router Auto Evaluation | Yes | A pinned Microsoft toolkit compares quality, latency, model distribution, and cost only when current pricing is configured. |
-| Foundry Evaluation | Optional post-processing | Completed local toolkit results can be submitted to managed graders; Foundry Evaluation does not directly invoke Model Router. |
+| Foundry Evaluation | Yes — optional runtime post-processing | The recorded run submitted completed local results to managed graders; Foundry Evaluation did not directly invoke Model Router. |
 | Agent Service conversations, threads/runs, or long-term memory | No | The lab does not need persistent agent state. |
 | Function calling or external tools | No | No external action is required for a routing benchmark. |
 | Azure AI Search RAG | No | Synthetic Kafka prompts are supplied directly and contain no private corpus. |
@@ -206,8 +206,8 @@ router deployments against the same fixed baseline and judge with Entra auth:
 python3 tools/eval/eval.py validate --remote-pin
 python3 tools/eval/eval.py bootstrap
 
-export AZURE_MODEL_ROUTER_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/models'
-export AZURE_OPENAI_ENDPOINT='https://YOUR-RESOURCE.openai.azure.com'
+export AZURE_MODEL_ROUTER_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com'
+export AZURE_OPENAI_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com'
 export AZURE_MODEL_ROUTER_BASIC_DEPLOYMENT='YOUR-DEFAULT-ROUTER'
 export AZURE_MODEL_ROUTER_ADVANCED_DEPLOYMENT='YOUR-ADVANCED-ROUTER'
 export AZURE_BASELINE_DEPLOYMENT='YOUR-FIXED-DEPLOYMENT'
@@ -238,7 +238,11 @@ python3 tools/eval/eval.py cloud-eval \
 See [the evaluation guide](../tools/eval/README.md) for pin verification, data
 handling, sample-size guidance, and the API-key fallback. The sanitized
 [2026-07-16 live evaluation record](live-evaluation.md) captures the aggregate
-results without committing raw model responses or per-request result records.
+results. The public [evidence bundle](evidence/2026-07-16-foundry-live/README.md)
+adds charts, sanitized managed-evaluation/tracing/usage exports, screenshots,
+and one manually reviewed synthetic response triplet while excluding bulk raw
+results, endpoint URLs, and identity/evaluation locator IDs. Disposable demo
+resource names remain in the inventory for cleanup provenance.
 
 ## Privacy, identity, and cost boundary
 
@@ -256,7 +260,7 @@ results without committing raw model responses or per-request result records.
 - The Log Analytics daily cap limits ingestion, not total Azure spend. Delete the
   dedicated resource group after the demo if it is no longer needed.
 
-## Live verification record
+## Historical live verification record
 
 On 2026-07-16, this workflow was exercised from an Apple M1 host against a new
 East US 2 Foundry project using Microsoft Entra authentication and local auth
@@ -265,6 +269,10 @@ router constrained to GPT-5.4 nano/mini/full all returned successful Responses
 API calls. The Cost router selected GPT-5.4 nano in the smoke run. Application
 Insights ingested spans for all three emitted trace IDs with content capture
 disabled.
+
+The environment was intentionally disposable. Its evidence was published before
+cleanup; the current gate and eventual deletion/purge result are recorded in
+[cleanup-summary.json](evidence/2026-07-16-foundry-live/data/cleanup-summary.json).
 
 This record proves connectivity and integration, not production readiness or a
 general quality claim. The included broker is local and unauthenticated, public

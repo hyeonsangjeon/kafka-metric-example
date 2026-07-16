@@ -1,0 +1,110 @@
+{
+  "capturedAtUtc": "2026-07-16T15:43:16Z",
+  "dataset": {
+    "name": "kafka-demo.jsonl",
+    "syntheticPrompts": 12,
+    "minimumRecommendedForDecision": 100
+  },
+  "toolkit": {
+    "commit": "ecf0aa26b4b613536a2ecb23ac1231b380c064f1",
+    "tree": "599225a9e437e016044aa75fd8d8d60d09205b49"
+  },
+  "profiles": [
+    {
+      "profile": "default-balanced",
+      "routerSuccess": "12/12",
+      "fixedSuccess": "12/12",
+      "routerLatencyMs": {
+        "mean": 7096.48,
+        "median": 6485.60,
+        "p95": 13176.86
+      },
+      "fixedLatencyMs": {
+        "mean": 3561.80,
+        "median": 3308.02,
+        "p95": 5957.51
+      },
+      "pairwise": {
+        "routerWins": 3,
+        "fixedWins": 6,
+        "ties": 3
+      },
+      "absoluteScore": {
+        "router": 4.312,
+        "fixed": 4.688
+      },
+      "selectedModels": {
+        "grok-4-1-fast-reasoning": 8,
+        "gpt-5-mini-2025-08-07": 2,
+        "gpt-5.4-2026-03-05": 1,
+        "gpt-5.4-mini-2026-03-17": 1
+      },
+      "managedEvaluation": {
+        "status": "completed",
+        "items": 12,
+        "errored": 0,
+        "overallCriteriaPassed": 0,
+        "graderSummary": {
+          "routerAbsolute": {"mean": 4.167, "passRatePercent": 91.7},
+          "fixedAbsolute": {"mean": 4.667, "passRatePercent": 100.0},
+          "pairwise": {"mean": 3.083, "passRatePercent": 66.7},
+          "latency": {"mean": 0.127, "passRatePercent": 0.0}
+        }
+      }
+    },
+    {
+      "profile": "advanced-cost",
+      "routerSuccess": "12/12",
+      "fixedSuccess": "12/12",
+      "routerLatencyMs": {
+        "mean": 5387.81,
+        "median": 5603.23,
+        "p95": 9047.48
+      },
+      "fixedLatencyMs": {
+        "mean": 4499.99,
+        "median": 3582.26,
+        "p95": 10024.18
+      },
+      "pairwise": {
+        "routerWins": 1,
+        "fixedWins": 6,
+        "ties": 5
+      },
+      "absoluteScore": {
+        "router": 3.479,
+        "fixed": 4.771
+      },
+      "selectedModels": {
+        "gpt-5.4-nano-2026-03-17": 11,
+        "gpt-5.4-mini-2026-03-17": 1,
+        "gpt-5.4-2026-03-05": 0
+      },
+      "managedEvaluation": {
+        "status": "completed",
+        "items": 12,
+        "errored": 0,
+        "overallCriteriaPassed": 2,
+        "graderSummary": {
+          "routerAbsolute": {"mean": 3.417, "passRatePercent": 66.7},
+          "fixedAbsolute": {"mean": 4.583, "passRatePercent": 100.0},
+          "pairwise": {"mean": 2.500, "passRatePercent": 50.0},
+          "latency": {"mean": 0.317, "passRatePercent": 33.3}
+        }
+      }
+    }
+  ],
+  "cost": {
+    "status": "unavailable",
+    "reason": "The pinned toolkit did not contain verified prices for every model the routers could select."
+  },
+  "removedFromExport": [
+    "model response bulk data",
+    "request IDs",
+    "evaluation IDs",
+    "evaluation run IDs",
+    "portal report URLs",
+    "local absolute paths",
+    "cloud endpoint URLs"
+  ]
+}

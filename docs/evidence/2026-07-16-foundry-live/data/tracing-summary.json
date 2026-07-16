@@ -1,0 +1,58 @@
+{
+  "capturedAtUtc": "2026-07-16T16:49:00Z",
+  "source": "Application Insights backed by Log Analytics",
+  "queryWindow": "P7D",
+  "smokeOperations": 3,
+  "cognitiveServiceDependencies": 6,
+  "successfulDependencies": 6,
+  "profiles": [
+    {
+      "profile": "fixed",
+      "requestModel": "gpt-5.4-mini",
+      "responseModel": "gpt-5.4-mini",
+      "calls": 1,
+      "averageDurationMs": 38975,
+      "inputTokens": 20,
+      "outputTokens": 46,
+      "successes": 1
+    },
+    {
+      "profile": "router-default",
+      "requestModel": "model-router-default",
+      "responseModel": "gpt-5-mini-2025-08-07",
+      "calls": 1,
+      "averageDurationMs": 11320,
+      "inputTokens": 30,
+      "outputTokens": 433,
+      "successes": 1
+    },
+    {
+      "profile": "router-advanced",
+      "requestModel": "model-router-cost",
+      "responseModel": "gpt-5.4-nano-2026-03-17",
+      "calls": 1,
+      "averageDurationMs": 20186,
+      "inputTokens": 30,
+      "outputTokens": 40,
+      "successes": 1
+    }
+  ],
+  "contentCaptureAudit": {
+    "knownPromptMatches": 0,
+    "inputMessageShape": [{"role": "user", "parts": [{"type": "text"}]}],
+    "outputMessageShape": [{"role": "assistant", "parts": [{"type": "text"}], "finish_reason": "completed"}],
+    "messageTextPresent": false,
+    "rawPropertiesExported": false
+  },
+  "instrumentationNote": {
+    "metadataProbeConnectionErrors": 1,
+    "impact": "The three model calls and their exported dependencies still completed successfully."
+  },
+  "removedFromExport": [
+    "operation IDs",
+    "trace IDs",
+    "request IDs",
+    "response IDs",
+    "raw Properties bags"
+  ]
+}

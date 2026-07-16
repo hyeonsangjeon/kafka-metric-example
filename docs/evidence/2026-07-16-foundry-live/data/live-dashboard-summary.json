@@ -1,0 +1,59 @@
+{
+  "capturedAtUtc": "2026-07-16T16:52:01Z",
+  "applicationVersion": "1.1.0",
+  "provider": "foundry",
+  "transport": "kafka",
+  "input": {
+    "workload": "chat",
+    "scenario": "healthy",
+    "trafficPerProfile": 1,
+    "prompt": "Explain one practical Kafka reliability signal.",
+    "promptChars": 47,
+    "promptSha256": "f2a21c468b95fdf0259ac96714a6b6f7112bc6d558a878157a422d0ef1913f2e"
+  },
+  "results": [
+    {
+      "profile": "fixed",
+      "strategy": "fixed",
+      "selectedRoute": "gpt-5-4-mini",
+      "modelFamily": "GPT-5.4 mini",
+      "status": "completed",
+      "latencyMs": 3062,
+      "inputTokens": 22,
+      "outputTokens": 115,
+      "responseChars": 573,
+      "kafkaConsumerLag": 0
+    },
+    {
+      "profile": "router-default",
+      "strategy": "balanced",
+      "selectedRoute": "gpt-5-mini",
+      "modelFamily": "GPT-5 mini",
+      "status": "completed",
+      "latencyMs": 10959,
+      "inputTokens": 28,
+      "outputTokens": 1209,
+      "responseChars": 1936,
+      "kafkaConsumerLag": 0
+    },
+    {
+      "profile": "router-advanced",
+      "strategy": "cost",
+      "selectedRoute": "gpt-5-4-nano",
+      "modelFamily": "GPT-5.4 nano",
+      "status": "completed",
+      "latencyMs": 3831,
+      "inputTokens": 28,
+      "outputTokens": 78,
+      "responseChars": 372,
+      "kafkaConsumerLag": 0
+    }
+  ],
+  "privacyBoundary": {
+    "responseBodiesInApplicationTelemetry": false,
+    "promptBodiesInKafka": false,
+    "responseBodiesInKafka": false,
+    "opaqueRunTraceAndSessionIdsRemovedFromThisExport": true
+  },
+  "interpretation": "One request per profile proves routing and telemetry integration only. It is not a statistically meaningful performance comparison."
+}

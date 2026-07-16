@@ -12,7 +12,9 @@ Usage:
   ./infra/verify.sh [--principal-object-id UUID]
 
 Runs read-only control-plane checks. It does not call a model, consume model
-tokens, retrieve a key, or print a resource/principal/subscription identifier.
+tokens, retrieve a key, or print Azure resource IDs, secrets,
+principal/subscription IDs, or role-assignment IDs. Its final safe application
+configuration can include resource endpoint and deployment names.
 Use the same required AZURE_UNIQUE_SUFFIX value used for provisioning.
 EOF
 }

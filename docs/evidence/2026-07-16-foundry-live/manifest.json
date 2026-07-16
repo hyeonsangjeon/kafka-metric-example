@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "captureName": "2026-07-16 Foundry live demo",
+  "capturedAtUtc": "2026-07-16T16:52:01Z",
+  "capturedAtAsiaSeoul": "2026-07-17T01:52:01+09:00",
+  "source": {
+    "repository": "hyeonsangjeon/kafka-metric-example",
+    "release": "v1.1.0",
+    "commit": "99cc14ca05e3e9a5d049d4bf080b3a3d4b732cc7",
+    "container": "ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.0",
+    "containerDigest": "sha256:7daf69c89cffee4576d4c2ed79fb80f0093730d36ac11a6fe454addfc196fe81"
+  },
+  "environment": {
+    "hardware": "Apple M1",
+    "architecture": "arm64",
+    "macOS": "26.1",
+    "java": "OpenJDK 21.0.11",
+    "maven": "3.8.4",
+    "node": "26.4.0",
+    "npm": "11.17.0",
+    "dockerEngine": "28.3.3",
+    "dockerCompose": "2.39.2-desktop.1",
+    "azureCli": "2.87.0",
+    "githubCli": "2.95.0"
+  },
+  "captureMethods": [
+    "Foundry Responses API through the Java provider",
+    "Kafka telemetry projection and SSE dashboard",
+    "Microsoft Model Router Auto Evaluation toolkit",
+    "Foundry managed Evaluation graders",
+    "Application Insights and Log Analytics aggregate queries",
+    "Azure Monitor model request and token metrics",
+    "Azure control-plane inventory and verification"
+  ],
+  "artifacts": {
+    "dataFiles": 6,
+    "screenshots": 6,
+    "evaluationCharts": 12,
+    "curatedModelIoItems": 1,
+    "curatedModelResponses": 3,
+    "checksums": "checksums.sha256"
+  },
+  "privacy": {
+    "syntheticPromptDataOnly": true,
+    "bulkModelResponsesExcluded": true,
+    "rawTracePropertiesExcluded": true,
+    "subscriptionTenantPrincipalAndResourceIdsExcluded": true,
+    "endpointUrlsExcluded": true,
+    "demoResourceNamesRetainedForCleanupProvenance": true
+  },
+  "cleanupStatus": "data/cleanup-summary.json"
+}
