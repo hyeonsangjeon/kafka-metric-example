@@ -21,16 +21,22 @@ telemetry paths remain comparable.
 
 ### Foundry presentation
 
-1. Configure both `FOUNDRY_MODEL` and `FOUNDRY_ROUTER_MODEL`; configure the
-   Model Router deployment itself for the intended Balanced, Cost, or Quality
-   mode.
-2. Set `FOUNDRY_ROUTER_PROFILE` to matching metadata and keep traffic within
-   `MAX_CLOUD_REQUESTS_PER_RUN`.
-3. Run `fixed`, then `router-balanced`, using the same workload, scenario,
-   traffic, and prompt.
+1. Configure `FOUNDRY_MODEL`, `FOUNDRY_ROUTER_DEFAULT_MODEL`, and
+   `FOUNDRY_ROUTER_ADVANCED_MODEL`. Leave the default router in Balanced mode;
+   configure the separate advanced deployment for Cost or Quality and, if
+   useful, a restricted model set.
+2. Set `FOUNDRY_ROUTER_ADVANCED_PROFILE` to matching `cost` or `quality`
+   metadata and keep traffic within `MAX_CLOUD_REQUESTS_PER_RUN`.
+3. Run `fixed`, `router-default`, and `router-advanced`, using the same
+   workload, scenario, traffic, and prompt for every run.
 4. Compare outcomes, p95 latency, attempts, token counts, and the distribution
-   of privacy-safe model-family labels. Do not interpret the short sample as a
+   of privacy-safe model-family labels across the fixed baseline, default
+   behavior, and advanced policy. Do not interpret the short sample as a
    quality or cost benchmark.
+
+The legacy `FOUNDRY_ROUTER_MODEL`/`FOUNDRY_ROUTER_PROFILE` pair still works for
+an upgraded installation. It maps Balanced to `router-default` and Cost or
+Quality to `router-advanced`, but cannot expose both router profiles at once.
 
 Ollama exposes only `ollama-fixed`; it is useful for a real local-model request
 path, but it does not emulate Foundry Model Router. An Ollama failure never
@@ -67,8 +73,9 @@ share of records while requests continue to complete normally.
 
 After the fixed/router comparison:
 
-1. Keep `router-balanced` and run **Consumer slowdown**. Watch lag and freshness
-   rise independently of provider latency.
+1. Keep the selected router profile (`router-balanced` in the simulator,
+   `router-default` or `router-advanced` in Foundry) and run **Consumer
+   slowdown**. Watch lag and freshness rise independently of provider latency.
 2. Run **Duplicate delivery** and confirm completed requests do not increase
    twice.
 3. Run **Model throttling** and compare retries/tail latency with stable lag.

@@ -17,6 +17,9 @@ public record AppConfig(
         String foundryModel,
         String foundryRouterModel,
         String foundryRouterProfile,
+        String foundryRouterDefaultModel,
+        String foundryRouterAdvancedModel,
+        String foundryRouterAdvancedProfile,
         String ollamaBaseUrl,
         String ollamaModel,
         boolean ollamaRequireLoopback,
@@ -26,6 +29,7 @@ public record AppConfig(
     public static final int DEFAULT_MAX_CLOUD_REQUESTS = 10;
     public static final String DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1";
     private static final Set<String> ROUTER_PROFILES = Set.of("balanced", "cost", "quality");
+    private static final Set<String> ADVANCED_ROUTER_PROFILES = Set.of("cost", "quality");
 
     public static AppConfig fromEnvironment() {
         return from(System.getenv());
@@ -37,6 +41,30 @@ public record AppConfig(
                 DEFAULT_MAX_CLOUD_REQUESTS, 1, 100, "MAX_CLOUD_REQUESTS_PER_RUN");
         String providerSetting = firstNonBlank(
                 env.get("AI_PROVIDER"), env.get("AI_MODE"), "simulated");
+        String legacyRouterModel = trimToEmpty(env.get("FOUNDRY_ROUTER_MODEL"));
+        String legacyRouterProfile = normalizedRouterProfile(
+                env.get("FOUNDRY_ROUTER_PROFILE"), "balanced", ROUTER_PROFILES,
+                "FOUNDRY_ROUTER_PROFILE");
+        String defaultRouterModel = trimToEmpty(env.get("FOUNDRY_ROUTER_DEFAULT_MODEL"));
+        String advancedRouterModel = trimToEmpty(env.get("FOUNDRY_ROUTER_ADVANCED_MODEL"));
+        boolean explicitDualRouterConfiguration = !defaultRouterModel.isBlank()
+                || !advancedRouterModel.isBlank();
+        if (!explicitDualRouterConfiguration && !legacyRouterModel.isBlank()) {
+            if ("balanced".equals(legacyRouterProfile)) {
+                defaultRouterModel = legacyRouterModel;
+            } else {
+                advancedRouterModel = legacyRouterModel;
+            }
+        }
+        String advancedRouterProfile = normalizedRouterProfile(
+                firstNonBlank(
+                        env.get("FOUNDRY_ROUTER_ADVANCED_PROFILE"),
+                        ADVANCED_ROUTER_PROFILES.contains(legacyRouterProfile)
+                                ? legacyRouterProfile : null,
+                        "quality"),
+                "quality",
+                ADVANCED_ROUTER_PROFILES,
+                "FOUNDRY_ROUTER_ADVANCED_PROFILE");
 
         return new AppConfig(
                 valueOrDefault(env.get("APP_HOST"), "127.0.0.1"),
@@ -48,9 +76,11 @@ public record AppConfig(
                 AiMode.parse(providerSetting),
                 trimToEmpty(env.get("FOUNDRY_PROJECT_ENDPOINT")),
                 trimToEmpty(env.get("FOUNDRY_MODEL")),
-                trimToEmpty(env.get("FOUNDRY_ROUTER_MODEL")),
-                valueOrDefault(env.get("FOUNDRY_ROUTER_PROFILE"), "balanced")
-                        .toLowerCase(Locale.ROOT),
+                legacyRouterModel,
+                legacyRouterProfile,
+                defaultRouterModel,
+                advancedRouterModel,
+                advancedRouterProfile,
                 valueOrDefault(env.get("OLLAMA_BASE_URL"), DEFAULT_OLLAMA_BASE_URL),
                 trimToEmpty(env.get("OLLAMA_MODEL")),
                 strictBoolean(env.get("OLLAMA_REQUIRE_LOOPBACK"), true, "OLLAMA_REQUIRE_LOOPBACK"),
@@ -62,7 +92,15 @@ public record AppConfig(
     }
 
     public boolean foundryRouterConfigured() {
-        return foundryConfigured() && !foundryRouterModel.isBlank();
+        return foundryDefaultRouterConfigured() || foundryAdvancedRouterConfigured();
+    }
+
+    public boolean foundryDefaultRouterConfigured() {
+        return foundryConfigured() && !foundryRouterDefaultModel.isBlank();
+    }
+
+    public boolean foundryAdvancedRouterConfigured() {
+        return foundryConfigured() && !foundryRouterAdvancedModel.isBlank();
     }
 
     public void validate() {
@@ -76,6 +114,15 @@ public record AppConfig(
         if (!ROUTER_PROFILES.contains(foundryRouterProfile)) {
             throw new IllegalArgumentException(
                     "FOUNDRY_ROUTER_PROFILE must be one of balanced, cost, quality");
+        }
+        if (!ADVANCED_ROUTER_PROFILES.contains(foundryRouterAdvancedProfile)) {
+            throw new IllegalArgumentException(
+                    "FOUNDRY_ROUTER_ADVANCED_PROFILE must be one of cost, quality");
+        }
+        if (!foundryRouterDefaultModel.isBlank()
+                && foundryRouterDefaultModel.equals(foundryRouterAdvancedModel)) {
+            throw new IllegalArgumentException(
+                    "Foundry default and advanced router deployments must differ");
         }
         if (aiMode == AiMode.OLLAMA) {
             if (ollamaModel.isBlank()) {
@@ -167,6 +214,18 @@ public record AppConfig(
             }
         }
         return "";
+    }
+
+    private static String normalizedRouterProfile(
+            String raw,
+            String fallback,
+            Set<String> allowed,
+            String name) {
+        String value = valueOrDefault(raw, fallback).toLowerCase(Locale.ROOT);
+        if (!allowed.contains(value)) {
+            throw new IllegalArgumentException(name + " has unsupported value: " + value);
+        }
+        return value;
     }
 
     private static String trimToEmpty(String value) {

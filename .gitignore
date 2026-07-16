@@ -1,5 +1,7 @@
 .DS_Store
 .env
+.env.*
+!.env.example
 .idea/
 .vscode/
 *.iml
@@ -8,6 +10,11 @@
 app/target/
 *.log
 hs_err_pid*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
 
 # Node / Vite
 web/node_modules/
@@ -18,5 +25,7 @@ web/.vite/
 # Local runtime
 .data/
 tmp/
+tools/eval/results/
+tools/eval/.venv/
 
 !/.mvn/wrapper/maven-wrapper.jar

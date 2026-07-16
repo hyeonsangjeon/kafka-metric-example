@@ -11,7 +11,7 @@ flowchart LR
     API --> PROFILE{Execution profile}
     PROFILE --> SIM[Simulator\nfixed / router-balanced]
     PROFILE --> OLLAMA[Ollama local\nollama-fixed]
-    PROFILE --> FOUNDRY[Microsoft Foundry\nfixed / Model Router]
+    PROFILE --> FOUNDRY[Microsoft Foundry\nfixed / router-default / router-advanced]
   end
 
   subgraph telemetry[Telemetry path]
@@ -41,24 +41,31 @@ event loop. The HTTP surface is versioned under `/api/v1`.
   only `ollama-fixed`, requires an explicit local model, and rejects a
   non-loopback base URL by default.
 - `foundry` uses the Microsoft Foundry project endpoint, Responses API, and
-  `DefaultAzureCredential`. It always exposes `fixed`; `router-balanced` is
-  added when `FOUNDRY_ROUTER_MODEL` is configured. Cloud runs are capped by
-  `MAX_CLOUD_REQUESTS_PER_RUN`.
+  `DefaultAzureCredential`. It always exposes `fixed`; `router-default` is
+  added when `FOUNDRY_ROUTER_DEFAULT_MODEL` is configured, and
+  `router-advanced` is added when `FOUNDRY_ROUTER_ADVANCED_MODEL` is
+  configured. Cloud runs are capped by `MAX_CLOUD_REQUESTS_PER_RUN`.
 
 Provider selection and execution-profile selection are separate. The API
 publishes both `models` and `modelProfiles`; a run accepts `modelId` or
 `modelProfile` and rejects unknown or contradictory values. Profile IDs are
-`fixed`, `router-balanced`, and `ollama-fixed`.
+provider-specific: the simulator exposes `fixed` and `router-balanced`, Ollama
+exposes `ollama-fixed`, and Foundry exposes `fixed`, `router-default`, and/or
+`router-advanced` according to configuration.
 
 There is no automatic provider fallback. In particular, an unavailable Ollama
 endpoint produces a visible local-provider failure instead of sending the
 request to Foundry.
 
-For a real Foundry Model Router run, the application selects the router
-deployment but does not choose its underlying model. Balanced, Cost, or Quality
-mode is configured on that deployment. `FOUNDRY_ROUTER_PROFILE` only labels and
-validates the deployment intent for this demo; it is not a per-request routing
-control.
+For a real Foundry Model Router run, the application selects a router deployment
+but does not choose its underlying model. `router-default` represents the
+router's default Balanced configuration. `router-advanced` represents a
+separately configured Cost or Quality deployment, optionally with a restricted
+model set. `FOUNDRY_ROUTER_ADVANCED_PROFILE` labels and validates that deployment
+intent for this demo; it is not a per-request routing control. The legacy
+`FOUNDRY_ROUTER_MODEL`/`FOUNDRY_ROUTER_PROFILE` pair remains compatible:
+Balanced maps to `router-default`, while Cost or Quality maps to
+`router-advanced`.
 
 The provider response is ephemeral. It is not published to Kafka or retained by
 the dashboard.

@@ -6,7 +6,7 @@
 
   <groupId>dev.hyeonsangjeon</groupId>
   <artifactId>foundry-stream-lab</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <name>Foundry Stream Lab</name>
   <description>Privacy-safe Microsoft Foundry workload telemetry over Kafka and Vert.x</description>
 

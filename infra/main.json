@@ -1,0 +1,324 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus2"
+    },
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Globally unique Foundry account name supplied by the wrapper script."
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "kafka-router-demo"
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name supplied by the wrapper script."
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Application Insights component name supplied by the wrapper script."
+      }
+    },
+    "appInsightsConnectionName": {
+      "type": "string",
+      "defaultValue": "appinsights-demo"
+    },
+    "fixedDeploymentName": {
+      "type": "string",
+      "defaultValue": "gpt-5.4-mini"
+    },
+    "defaultRouterDeploymentName": {
+      "type": "string",
+      "defaultValue": "model-router-default"
+    },
+    "costRouterDeploymentName": {
+      "type": "string",
+      "defaultValue": "model-router-cost"
+    },
+    "principalObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID receiving demo access. It is never emitted as a deployment output."
+      }
+    },
+    "developerFoundryUserRoleAssignmentName": {
+      "type": "string"
+    },
+    "projectFoundryUserRoleAssignmentName": {
+      "type": "string"
+    },
+    "developerMonitoringReaderRoleAssignmentName": {
+      "type": "string"
+    },
+    "projectMonitoringPublisherRoleAssignmentName": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "object",
+      "metadata": {
+        "description": "Ownership, cleanup, repository, and runtime-calculated expiry tags supplied by the wrapper script."
+      }
+    }
+  },
+  "variables": {
+    "accountApiVersion": "2026-03-01",
+    "accountId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName'))]",
+    "projectId": "[resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('accountName'), parameters('projectName'))]",
+    "fixedDeploymentId": "[resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('accountName'), parameters('fixedDeploymentName'))]",
+    "defaultRouterDeploymentId": "[resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('accountName'), parameters('defaultRouterDeploymentName'))]",
+    "costRouterDeploymentId": "[resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('accountName'), parameters('costRouterDeploymentName'))]",
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+    "appInsightsId": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+    "foundryUserRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')]",
+    "monitoringMetricsPublisherRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')]",
+    "monitoringReaderRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "workspaceCapping": {
+          "dailyQuotaGb": 0.1
+        },
+        "features": {
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        },
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[parameters('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "Application_Type": "web",
+        "Request_Source": "rest",
+        "IngestionMode": "LogAnalytics",
+        "WorkspaceResourceId": "[variables('workspaceId')]"
+      },
+      "dependsOn": [
+        "[variables('workspaceId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2026-03-01",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "kind": "AIServices",
+      "sku": {
+        "name": "S0"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "allowProjectManagement": true,
+        "customSubDomainName": "[parameters('accountName')]",
+        "disableLocalAuth": true,
+        "dynamicThrottlingEnabled": false,
+        "publicNetworkAccess": "Enabled",
+        "restrictOutboundNetworkAccess": false
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2026-03-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('projectName'))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "displayName": "Kafka Model Router Demo",
+        "description": "Fixed versus default and cost-optimized Model Router telemetry demo."
+      },
+      "dependsOn": [
+        "[variables('accountId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2026-03-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('fixedDeploymentName'))]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "gpt-5.4-mini",
+          "version": "2026-03-17"
+        },
+        "serviceTier": "Default",
+        "versionUpgradeOption": "NoAutoUpgrade"
+      },
+      "dependsOn": [
+        "[variables('projectId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2026-03-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('defaultRouterDeploymentName'))]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "model-router",
+          "version": "2025-11-18"
+        },
+        "serviceTier": "Default",
+        "versionUpgradeOption": "NoAutoUpgrade"
+      },
+      "dependsOn": [
+        "[variables('fixedDeploymentId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2026-03-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('costRouterDeploymentName'))]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "model-router",
+          "version": "2025-11-18"
+        },
+        "routing": {
+          "mode": "cost",
+          "models": [
+            {
+              "format": "OpenAI",
+              "name": "gpt-5.4-nano",
+              "version": "2026-03-17"
+            },
+            {
+              "format": "OpenAI",
+              "name": "gpt-5.4-mini",
+              "version": "2026-03-17"
+            },
+            {
+              "format": "OpenAI",
+              "name": "gpt-5.4",
+              "version": "2026-03-05"
+            }
+          ]
+        },
+        "serviceTier": "Default",
+        "versionUpgradeOption": "NoAutoUpgrade"
+      },
+      "dependsOn": [
+        "[variables('defaultRouterDeploymentId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/connections",
+      "apiVersion": "2025-12-01",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('appInsightsConnectionName'))]",
+      "properties": {
+        "category": "AppInsights",
+        "target": "[variables('appInsightsId')]",
+        "authType": "ApiKey",
+        "credentials": {
+          "key": "[reference(variables('appInsightsId'), '2020-02-02').ConnectionString]"
+        },
+        "isSharedToAll": true,
+        "metadata": {
+          "ApiType": "Azure",
+          "ResourceId": "[variables('appInsightsId')]",
+          "location": "[parameters('location')]"
+        }
+      },
+      "dependsOn": [
+        "[variables('costRouterDeploymentId')]",
+        "[variables('appInsightsId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', parameters('accountName'), parameters('developerFoundryUserRoleAssignmentName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('foundryUserRoleDefinitionId')]",
+        "principalId": "[parameters('principalObjectId')]"
+      },
+      "dependsOn": [
+        "[variables('accountId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', parameters('accountName'), parameters('projectFoundryUserRoleAssignmentName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('foundryUserRoleDefinitionId')]",
+        "principalId": "[reference(variables('projectId'), variables('accountApiVersion'), 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[variables('projectId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', parameters('appInsightsName'), parameters('projectMonitoringPublisherRoleAssignmentName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('monitoringMetricsPublisherRoleDefinitionId')]",
+        "principalId": "[reference(variables('projectId'), variables('accountApiVersion'), 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[variables('projectId')]",
+        "[variables('appInsightsId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[format('{0}/Microsoft.Authorization/{1}', parameters('appInsightsName'), parameters('developerMonitoringReaderRoleAssignmentName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('monitoringReaderRoleDefinitionId')]",
+        "principalId": "[parameters('principalObjectId')]"
+      },
+      "dependsOn": [
+        "[variables('appInsightsId')]"
+      ]
+    }
+  ]
+}

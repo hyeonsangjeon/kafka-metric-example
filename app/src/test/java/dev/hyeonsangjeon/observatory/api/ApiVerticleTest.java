@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ApiVerticleTest {
     private Vertx vertx;
     private int port;
+    private LocalOnlyFakeProvider provider;
 
     @BeforeEach
     void startApi() throws Exception {
@@ -46,7 +47,7 @@ class ApiVerticleTest {
 
         vertx = Vertx.vertx();
         ProjectionStore store = new ProjectionStore();
-        AiProvider provider = new LocalOnlyFakeProvider();
+        provider = new LocalOnlyFakeProvider();
         InMemoryEventTransport transport = new InMemoryEventTransport(vertx);
         TransportSelection selection = new TransportSelection(transport, "memory", null);
         WorkloadRunner runner = new WorkloadRunner(
@@ -102,6 +103,17 @@ class ApiVerticleTest {
                 .getString("message").contains("unsupported model profile"));
     }
 
+    @Test
+    void acceptedRunCanonicalizesLegacyProfileAlias() throws Exception {
+        HttpResponse<String> response = post(new JsonObject()
+                .put("traffic", 1)
+                .put("modelProfile", "legacy-local"));
+
+        assertEquals(202, response.statusCode());
+        assertEquals("ollama-fixed", new JsonObject(response.body()).getString("modelProfile"));
+        assertEquals("ollama-fixed", provider.invoked.get(3, TimeUnit.SECONDS).modelProfile());
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         return HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path)).GET().build(),
@@ -124,6 +136,8 @@ class ApiVerticleTest {
     }
 
     private static final class LocalOnlyFakeProvider implements AiProvider {
+        private final CompletableFuture<ProviderRequest> invoked = new CompletableFuture<>();
+
         @Override
         public String alias() {
             return "ollama-local";
@@ -145,7 +159,16 @@ class ApiVerticleTest {
         }
 
         @Override
+        public ModelProfile requireModelProfile(String id) {
+            if ("legacy-local".equals(id)) {
+                return modelProfiles().getFirst();
+            }
+            return AiProvider.super.requireModelProfile(id);
+        }
+
+        @Override
         public CompletableFuture<ProviderResult> invoke(ProviderRequest request) {
+            invoked.complete(request);
             return CompletableFuture.completedFuture(new ProviderResult(
                     "unused", "fixed", "local", "Local model", null, null));
         }

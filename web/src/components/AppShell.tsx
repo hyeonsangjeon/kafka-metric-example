@@ -96,7 +96,7 @@ export function AppShell({
         <div className="sidebar__footer">
           <div className="privacy-mini"><ShieldCheck size={15} /><span>Payload bodies private</span></div>
           <div className="lab-running"><StatusDot status={connection} /><span>{connection === 'connected' ? 'Lab connected' : 'Lab offline'}</span></div>
-          <span className="version">v1.0.0</span>
+          <span className="version">v1.1.0</span>
         </div>
       </aside>
 

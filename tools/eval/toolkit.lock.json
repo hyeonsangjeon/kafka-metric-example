@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/microsoft-foundry/Model-Router-Auto-Evaluation.git",
+  "revision": "ecf0aa26b4b613536a2ecb23ac1231b380c064f1",
+  "tree": "599225a9e437e016044aa75fd8d8d60d09205b49",
+  "commit_date": "2026-06-12T12:17:05+01:00",
+  "commit_url": "https://github.com/microsoft-foundry/Model-Router-Auto-Evaluation/commit/ecf0aa26b4b613536a2ecb23ac1231b380c064f1",
+  "official_guide": "https://devblogs.microsoft.com/foundry/how-to-run-evals-for-model-router/",
+  "runtime_constraints": {
+    "matplotlib": ">=3.7,<3.11"
+  }
+}

@@ -140,7 +140,13 @@
         "model_profile": {
           "description": "Public execution-profile identifier, never a provider deployment name.",
           "type": "string",
-          "enum": ["fixed", "router-balanced", "ollama-fixed"]
+          "enum": [
+            "fixed",
+            "router-balanced",
+            "router-default",
+            "router-advanced",
+            "ollama-fixed"
+          ]
         },
         "route_strategy": {
           "description": "Configured fixed/router strategy. Foundry router mode is set on the deployment, not per request.",
