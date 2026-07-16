@@ -1,74 +1,95 @@
-# Provider and Model Router setup
+# Microsoft Foundry setup
 
-Foundry Stream Lab has three explicit provider paths. The credential-free
-simulator is the default, Ollama is local-only by default, and Microsoft Foundry
-is opt-in. There is no automatic fallback between them.
+Foundry Stream Lab keeps three provider paths explicit. The deterministic
+simulator is the default, Ollama is a local fixed-model path, and Microsoft
+Foundry is an opt-in live path. There is no automatic fallback between them.
 
-The Foundry adapter uses the current Responses API through the Java
-`azure-ai-agents` 2.x SDK. Responses and Conversations are the current runtime
-primitives; the lab does not use legacy Assistants threads/runs. Requests are
-stateless and set `store(false)`, so this demo does not opt in to Conversations
-or long-term agent memory.
+The Foundry path is deliberately a **Model Router demo**, not a general agent
+application. It compares one fixed deployment with two independently configured
+router deployments:
+
+- `router-default`: Balanced routing over the current supported model set.
+- `router-advanced`: Cost or Quality routing, optionally constrained to a model
+  subset.
+
+Router mode and subset are deployment properties. They are never changed by an
+application request, and a control-plane update can take several minutes to
+propagate.
+
+## Foundry capability scope
+
+| Capability | Used here | Boundary |
+| --- | --- | --- |
+| Responses API | Yes | Stateless calls with `store(false)`. |
+| Model Router | Yes | Fixed vs default Balanced vs advanced Cost/Quality deployments. |
+| Managed tracing | Yes | OpenTelemetry spans go to a project-connected Application Insights resource with prompt/response capture disabled. |
+| Model Router Auto Evaluation | Yes | A pinned Microsoft toolkit compares quality, latency, model distribution, and cost only when current pricing is configured. |
+| Foundry Evaluation | Optional post-processing | Completed local toolkit results can be submitted to managed graders; Foundry Evaluation does not directly invoke Model Router. |
+| Agent Service conversations, threads/runs, or long-term memory | No | The lab does not need persistent agent state. |
+| Function calling or external tools | No | No external action is required for a routing benchmark. |
+| Azure AI Search RAG | No | Synthetic Kafka prompts are supplied directly and contain no private corpus. |
+| Prompt Flow | No | The workload path is Java plus the Responses API; adding a second orchestration runtime would obscure the comparison. |
+| Fine-tuning | No | This demo changes routing policy and model subset, not model weights. |
+
+This narrow boundary makes `response.model`, latency, token use, Kafka delivery,
+and failure behavior attributable to the selected routing profile.
 
 Official references:
 
-- [Ollama OpenAI compatibility](https://docs.ollama.com/api/openai-compatibility)
-- [Microsoft Foundry Responses API with Model Router](https://learn.microsoft.com/azure/foundry/openai/how-to/responses-model-routing)
-- [Microsoft Foundry Model Router concepts](https://learn.microsoft.com/azure/foundry/openai/concepts/model-router)
-- [Responses REST reference](https://learn.microsoft.com/rest/api/microsoft-foundry/azureopenai/responses)
+- [Use Model Router](https://learn.microsoft.com/azure/foundry/openai/how-to/model-router)
+- [Responses API with Model Router](https://learn.microsoft.com/azure/foundry/openai/how-to/responses-model-routing)
+- [Create a Foundry project](https://learn.microsoft.com/azure/foundry/how-to/create-projects)
+- [Trace applications with OpenTelemetry](https://learn.microsoft.com/azure/foundry/observability/how-to/trace-agent-client-side)
+- [Model Router Auto Evaluation](https://github.com/microsoft-foundry/Model-Router-Auto-Evaluation)
 - [Keyless Microsoft Entra authentication](https://learn.microsoft.com/azure/foundry/foundry-models/how-to/configure-entra-id)
 
 ## Provider profiles
 
 | Provider | Profiles exposed to the UI | Provider request |
 | --- | --- | --- |
-| `simulated` | `fixed`, `router-balanced` | None; seeded local behavior |
-| `ollama` | `ollama-fixed` | `POST {OLLAMA_BASE_URL}/responses` |
-| `foundry` | `fixed`; `router-balanced` when a router deployment is configured | Foundry project Responses API |
+| `simulated` | `fixed`, `router-balanced` | None; seeded local behavior. |
+| `ollama` | `ollama-fixed` | `POST {OLLAMA_BASE_URL}/responses`. |
+| `foundry` | `fixed`, plus either or both live router profiles | Foundry project Responses API. |
 
-The simulator's router is a deterministic teaching aid. It emits synthetic
-`fast`, `general`, and `reasoning` routes so the dashboard can demonstrate the
-same comparison before Azure resources exist. It is not a local implementation
-of Microsoft's Model Router.
+The simulator's `router-balanced` profile is a deterministic teaching aid. It
+emits synthetic `fast`, `general`, and `reasoning` routes so the dashboard works
+before Azure resources exist. It is not a local implementation of Microsoft's
+Model Router.
 
 ## Environment reference
 
-| Variable | Default | Required when | Meaning |
-| --- | --- | --- | --- |
-| `AI_PROVIDER` | `simulated` | Never | `simulated`, `ollama`, or `foundry`. Takes precedence over `AI_MODE`. |
-| `AI_MODE` | unset | Never | Legacy alias for the same provider values, read only when `AI_PROVIDER` is absent. |
-| `EVENT_TRANSPORT` | `kafka` in Compose | Host/test choice | `kafka` or ephemeral `memory`. |
-| `APP_PORT` | `8080` | Never | Gateway and dashboard port. |
-| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434/v1` | Ollama override only | OpenAI-compatible base URL; `/responses` is appended. |
-| `OLLAMA_MODEL` | unset | `AI_PROVIDER=ollama` | Exact name of a model already pulled into Ollama. |
-| `OLLAMA_REQUIRE_LOOPBACK` | `true` | Never | Rejects a non-loopback Ollama URL unless explicitly disabled. |
-| `FOUNDRY_PROJECT_ENDPOINT` | unset | `AI_PROVIDER=foundry` | Project endpoint copied from the Foundry project page. |
-| `FOUNDRY_MODEL` | unset | `AI_PROVIDER=foundry` | Fixed model deployment used by the `fixed` profile. |
-| `FOUNDRY_ROUTER_MODEL` | unset | Router comparison only | Model Router deployment; its presence adds `router-balanced`. |
-| `FOUNDRY_ROUTER_PROFILE` | `balanced` | Never | `balanced`, `cost`, or `quality` deployment-intent metadata; does not reconfigure routing. |
-| `MAX_CLOUD_REQUESTS_PER_RUN` | `10` | Never | Hard cap on Foundry calls in one run. |
-| `KAFKA_BOOTSTRAP_SERVERS` | `broker:19092` in Compose | Kafka host override only | Broker address. |
-| `KAFKA_TOPIC` | `foundry.telemetry.v1` | Never | Versioned telemetry topic. |
-| `KAFKA_DLQ_TOPIC` | `foundry.telemetry.dlq.v1` | Never | Invalid-event dead-letter topic. |
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `AI_PROVIDER` | `simulated` | `simulated`, `ollama`, or `foundry`; takes precedence over `AI_MODE`. |
+| `AI_MODE` | unset | Compatibility alias read only when `AI_PROVIDER` is absent. |
+| `EVENT_TRANSPORT` | `kafka` in Compose | `kafka` or ephemeral `memory`. |
+| `APP_PORT` | `8080` | Gateway and dashboard port. |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434/v1` | OpenAI-compatible base URL; `/responses` is appended. |
+| `OLLAMA_MODEL` | unset | Exact model already pulled into Ollama. |
+| `OLLAMA_REQUIRE_LOOPBACK` | `true` | Reject a non-loopback Ollama URL unless explicitly disabled. |
+| `FOUNDRY_PROJECT_ENDPOINT` | unset | Project endpoint from the Foundry project page. |
+| `FOUNDRY_MODEL` | unset | Fixed model deployment used by `fixed`. |
+| `FOUNDRY_ROUTER_DEFAULT_MODEL` | unset | Default Balanced router deployment used by `router-default`. |
+| `FOUNDRY_ROUTER_ADVANCED_MODEL` | unset | Custom router deployment used by `router-advanced`. |
+| `FOUNDRY_ROUTER_ADVANCED_PROFILE` | `quality` in the Java runtime | `cost` or `quality` display/validation metadata; it does not alter Azure. |
+| `FOUNDRY_ROUTER_MODEL` | unset | Legacy single-router deployment variable. |
+| `FOUNDRY_ROUTER_PROFILE` | `balanced` | Legacy `balanced`, `cost`, or `quality` metadata. |
+| `MAX_CLOUD_REQUESTS_PER_RUN` | `10` | Hard cap on Foundry calls in one application run. |
 
-## Path 1: credential-free simulator
+When only the legacy pair is present, `balanced` maps to `router-default` and
+`cost`/`quality` maps to `router-advanced`. New configurations should use the
+dual-router variables.
 
-The full Docker Compose quick start uses the simulator and makes no provider
-network request:
+## Local paths
+
+The complete simulator path is credential-free:
 
 ```bash
 docker compose up --build
 ```
 
-Choose `fixed` and `router-balanced` in consecutive runs with the same
-workload, prompt, traffic, and failure scenario. Route labels, latency, tokens,
-and outcomes are repeatable for the same seeded request sequence.
-
-## Path 2: local Ollama fixed model
-
-Pull and serve a local model using Ollama, then run the gateway on the host.
-Host execution keeps `127.0.0.1` scoped to the machine running Ollama; inside
-the application container it would refer to that container instead.
+For Ollama, run the gateway on the host so the default loopback policy remains
+meaningful:
 
 ```bash
 make kafka
@@ -85,41 +106,45 @@ OLLAMA_REQUIRE_LOOPBACK=true \
 java -jar target/foundry-stream-lab.jar
 ```
 
-Serve the dashboard from a second terminal, then open
-[http://127.0.0.1:5173](http://127.0.0.1:5173):
+Ollama is fixed-model only. An unavailable local endpoint fails visibly and is
+never replaced by a paid Foundry call.
+
+## Provision the live Foundry demo
+
+The `infra/` plan creates one tagged non-production resource group containing:
+
+- an `AIServices` Foundry account and project with system-assigned identities;
+- one GPT-5.4 mini fixed deployment;
+- Model Router `2025-11-18` in default Balanced mode;
+- a Cost router restricted to GPT-5.4 nano, mini, and full;
+- workspace-based Application Insights with a 30-day Log Analytics retention
+  period and 0.1 GB daily ingestion cap;
+- the project monitoring connection and scoped RBAC.
+
+Review the plan, then apply it with the selected Azure CLI subscription:
 
 ```bash
-cd web
-npm ci
-npm run dev
+az login
+az account show
+
+export AZURE_UNIQUE_SUFFIX='your-unique-lowercase-suffix'
+./infra/provision.sh --dry-run
+./infra/provision.sh --apply
+./infra/verify.sh
 ```
 
-The adapter uses Ollama's OpenAI-compatible `/v1/responses` endpoint. Ollama
-Responses are treated as stateless by this lab. If Ollama is unavailable or
-rejects the request, the run records that error; it never falls back to
-Foundry.
+The Foundry account keeps local/key authentication disabled. The scripts never
+retrieve or print account keys, connection strings, bearer tokens, tenant IDs,
+subscription IDs, or principal IDs. See [the infrastructure guide](../infra/README.md)
+for overrides, ownership guards, verification, and explicit cleanup.
 
-On Docker Desktop, an explicit advanced opt-out can reach a host Ollama service
-with `OLLAMA_BASE_URL=http://host.docker.internal:11434/v1` and
-`OLLAMA_REQUIRE_LOOPBACK=false`. That weakens the loopback guard, so verify the
-hostname and local network exposure first. The recommended demo path remains
-running the gateway on the host with the guard enabled.
+## Run all three live profiles
 
-## Path 3: Foundry fixed vs Model Router
-
-### Prerequisites
-
-1. Create a dedicated non-production Microsoft Foundry project.
-2. Deploy one fixed model and one Model Router deployment.
-3. Configure the router deployment itself for Balanced, Cost, or Quality mode.
-4. Grant your identity the Foundry project user role.
-5. Install Azure CLI, run `az login`, and copy the project endpoint.
-
-Start Kafka, build the gateway, and run it on the host so
-`DefaultAzureCredential` can use the Azure CLI session:
+Run Kafka and the Java gateway on the host so `DefaultAzureCredential` can use
+the Azure CLI session:
 
 ```bash
-docker compose up -d broker topic-init
+make kafka
 
 cd app
 mvn -B package
@@ -129,13 +154,15 @@ EVENT_TRANSPORT=kafka \
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
 FOUNDRY_PROJECT_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/api/projects/YOUR-PROJECT' \
 FOUNDRY_MODEL='YOUR-FIXED-DEPLOYMENT' \
-FOUNDRY_ROUTER_MODEL='YOUR-MODEL-ROUTER-DEPLOYMENT' \
-FOUNDRY_ROUTER_PROFILE='balanced' \
+FOUNDRY_ROUTER_DEFAULT_MODEL='YOUR-DEFAULT-ROUTER' \
+FOUNDRY_ROUTER_ADVANCED_MODEL='YOUR-ADVANCED-ROUTER' \
+FOUNDRY_ROUTER_ADVANCED_PROFILE='cost' \
 MAX_CLOUD_REQUESTS_PER_RUN=10 \
 java -jar target/foundry-stream-lab.jar
 ```
 
-In another terminal, run the dashboard:
+Start the Vite dashboard from a second terminal and open
+[http://127.0.0.1:5173](http://127.0.0.1:5173):
 
 ```bash
 cd web
@@ -143,48 +170,103 @@ npm ci
 npm run dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Run `fixed`, then
-`router-balanced`, without changing the workload inputs. The value returned by
-the Foundry response is reduced to a hardcoded, privacy-safe model-family label
-before telemetry is emitted.
+Run `fixed`, `router-default`, and `router-advanced` without changing the prompt,
+workload, traffic, or failure scenario. Foundry's raw `response.model` value is
+reduced to a hardcoded family label before application telemetry is emitted; an
+unknown model becomes `other`.
 
-`FOUNDRY_ROUTER_PROFILE` does not select Balanced, Cost, or Quality per
-request. Those modes are properties of the router deployment. For example, a
-deployment configured for Cost should be paired with
-`FOUNDRY_ROUTER_PROFILE=cost` so the UI describes reality; changing only the
-environment value changes the label, not the deployment.
+## Managed tracing
 
-The stable API profile ID remains `router-balanced` for this demo even when the
-metadata label is Cost or Quality. Use `routeStrategy` in the snapshot and
-trace metadata to read the configured strategy.
+The tracing smoke tool calls all three deployments through the project client,
+loads its Application Insights connection, and force-flushes OpenTelemetry:
 
-## Azure identity
+```bash
+export FOUNDRY_PROJECT_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/api/projects/YOUR-PROJECT'
+export FOUNDRY_MODEL='YOUR-FIXED-DEPLOYMENT'
+export FOUNDRY_ROUTER_DEFAULT_MODEL='YOUR-DEFAULT-ROUTER'
+export FOUNDRY_ROUTER_ADVANCED_MODEL='YOUR-ADVANCED-ROUTER'
 
-The same `DefaultAzureCredential` chain supports managed identity. Assign the
-identity at the Foundry project boundary and provide only the endpoint and
-deployment configuration. Do not bake access tokens, client secrets, or
-endpoints into the image.
+uv run --python 3.12 \
+  --with-requirements tools/foundry/requirements.txt \
+  tools/foundry/live_smoke.py
+```
 
-## Privacy and cost boundary
+Prompt/response capture and baggage propagation are explicitly disabled before
+instrumentation is imported. Trace ingestion is asynchronous and commonly takes
+two to five minutes. The printed trace IDs can be used to verify spans in Azure
+Monitor without logging content.
 
-- Prompts go only to the selected provider; prompt and response bodies never go
-  to Kafka or browser storage.
-- Foundry calls set `store(false)`.
-- Endpoints, raw deployment/model names, credentials, tenant IDs, subscription
-  IDs, and customer identifiers are excluded from telemetry.
-- Route and model data use bounded safe aliases from a hardcoded mapping. An
-  unknown Foundry model is reported as `other`, not passed through.
-- `MAX_CLOUD_REQUESTS_PER_RUN` caps Foundry calls. It does not apply to the
-  simulator or Ollama.
+## Router evaluation
 
-## Known limitations
+`tools/eval/` pins a specific commit and tree from Microsoft's Model Router Auto
+Evaluation toolkit. It supplies a synthetic Kafka dataset and compares both
+router deployments against the same fixed baseline and judge with Entra auth:
 
-- The automated suite covers the deterministic simulator and provider adapter
-  behavior, but this repository has not verified a live Microsoft Foundry
-  project or paid Model Router deployment.
-- The comparison is an observability demo, not a statistically controlled model
-  quality or cost benchmark.
-- Router mode cannot be changed at request time; preconfigure separate router
-  deployments if a presentation must compare Balanced, Cost, and Quality.
-- This version does not opt in to Conversations/long-term memory, agent tools,
-  Azure AI Search RAG, managed evaluation, or managed tracing.
+```bash
+python3 tools/eval/eval.py validate --remote-pin
+python3 tools/eval/eval.py bootstrap
+
+export AZURE_MODEL_ROUTER_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/models'
+export AZURE_OPENAI_ENDPOINT='https://YOUR-RESOURCE.openai.azure.com'
+export AZURE_MODEL_ROUTER_BASIC_DEPLOYMENT='YOUR-DEFAULT-ROUTER'
+export AZURE_MODEL_ROUTER_ADVANCED_DEPLOYMENT='YOUR-ADVANCED-ROUTER'
+export AZURE_BASELINE_DEPLOYMENT='YOUR-FIXED-DEPLOYMENT'
+export AZURE_JUDGE_DEPLOYMENT='YOUR-FIXED-DEPLOYMENT'
+
+python3 tools/eval/eval.py matrix --auth entra
+```
+
+Generated reports contain model responses and remain under ignored
+`tools/eval/results/`. The committed dataset is intentionally small, so its
+quality and latency output is directional rather than statistically reliable.
+The wrapper refuses to invent a cost conclusion when the current routed models
+do not have an explicitly configured price.
+
+After local inference, completed results can be sent to managed Foundry graders:
+
+```bash
+export AZURE_AI_PROJECT_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/api/projects/YOUR-PROJECT'
+export AZURE_AI_MODEL_DEPLOYMENT_NAME='YOUR-JUDGE-DEPLOYMENT'
+
+python3 tools/eval/eval.py cloud-eval \
+  --input-dir tools/eval/results/MATRIX/RUN \
+  --dry-run
+python3 tools/eval/eval.py cloud-eval \
+  --input-dir tools/eval/results/MATRIX/RUN
+```
+
+See [the evaluation guide](../tools/eval/README.md) for pin verification, data
+handling, sample-size guidance, and the API-key fallback. The sanitized
+[2026-07-16 live evaluation record](live-evaluation.md) captures the aggregate
+results without committing raw model responses or per-request result records.
+
+## Privacy, identity, and cost boundary
+
+- Prompts go only to the selected provider. Prompt and response bodies never go
+  to Kafka, the projection, or browser storage.
+- Foundry application requests set `store(false)`.
+- Endpoints, raw deployment names, credentials, tenant IDs, subscription IDs,
+  and customer identifiers are excluded from Kafka events, projections, and
+  browser storage. Managed Application Insights traces can include the service
+  target and deployment name as standard dependency metadata; prompt/response
+  capture remains disabled.
+- Route/model data uses bounded aliases from a hardcoded mapping.
+- The app caps paid calls per run, while the evaluation tool requires an explicit
+  command and stores response-bearing reports only in an ignored local path.
+- The Log Analytics daily cap limits ingestion, not total Azure spend. Delete the
+  dedicated resource group after the demo if it is no longer needed.
+
+## Live verification record
+
+On 2026-07-16, this workflow was exercised from an Apple M1 host against a new
+East US 2 Foundry project using Microsoft Entra authentication and local auth
+disabled. Fixed GPT-5.4 mini, default Model Router `2025-11-18`, and a Cost-mode
+router constrained to GPT-5.4 nano/mini/full all returned successful Responses
+API calls. The Cost router selected GPT-5.4 nano in the smoke run. Application
+Insights ingested spans for all three emitted trace IDs with content capture
+disabled.
+
+This record proves connectivity and integration, not production readiness or a
+general quality claim. The included broker is local and unauthenticated, public
+Foundry endpoints remain enabled for the demo, and the small synthetic evaluation
+set cannot replace a representative workload of at least 100 prompts.

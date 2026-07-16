@@ -1,13 +1,13 @@
 # Foundry Stream Lab
 
-Compare a fixed model with a model router on the same bounded AI workload,
-inject one reliability failure, and watch privacy-safe telemetry move through
-Kafka in real time.
+Compare a fixed model with both the default Balanced Model Router and a custom
+Cost/Quality router on the same bounded AI workload, inject one reliability
+failure, and watch privacy-safe telemetry move through Kafka in real time.
 
 Foundry Stream Lab is a complete rebuild of the original Kafka metrics demo.
 It keeps the useful idea—`event -> Kafka -> projection -> live dashboard`—and
 replaces the 2019-era runtime and vendored admin theme with a focused Microsoft
-Foundry reliability lab.
+Foundry routing, evaluation, and observability lab.
 
 ## Why this exists
 
@@ -21,8 +21,9 @@ makes the boundary visible:
 
 The default simulator is deterministic, credential-free, and includes both
 `fixed` and `router-balanced` profiles. Ollama provides a local fixed-model
-path. Microsoft Foundry adds a real fixed deployment and Model Router comparison
-through the Responses API and `DefaultAzureCredential`.
+path. Microsoft Foundry adds a real fixed deployment, a default Balanced router,
+and a separately configured advanced router through the Responses API and
+`DefaultAzureCredential`.
 
 ## Quick start
 
@@ -44,9 +45,9 @@ Stable releases are published for both `linux/amd64` and `linux/arm64` with an
 SBOM and provenance attestation:
 
 ```bash
-docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.0.0
+docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.0
 docker run --rm -p 127.0.0.1:8080:8080 \
-  ghcr.io/hyeonsangjeon/kafka-metric-example:1.0.0
+  ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.0
 ```
 
 The standalone image uses the deterministic simulator and in-memory telemetry
@@ -56,11 +57,12 @@ transport by default. Use the Compose quick start for the complete Kafka path.
 
 1. Keep the same workload, traffic, prompt, and **Healthy** scenario.
 2. Run the `fixed` profile and note p95 latency, outcomes, and selected route.
-3. Run `router-balanced` and compare its routing mix on the same telemetry
-   path. In simulator mode the decision is deterministic and explicitly
-   synthetic.
-4. Add **Consumer slowdown** to separate Kafka lag from model latency.
-5. Add **Model throttling** to inspect the bounded retry in trace details.
+3. In simulator mode, run `router-balanced`; its decision is deterministic and
+   explicitly synthetic.
+4. In Foundry mode, compare `router-default` with `router-advanced` on unchanged
+   inputs. Their routing modes are properties of separate Azure deployments.
+5. Add **Consumer slowdown** to separate Kafka lag from model latency, then add
+   **Model throttling** to inspect the bounded retry in trace details.
 
 See [the scenario guide](docs/scenarios.md) for a presenter-ready script.
 
@@ -72,7 +74,7 @@ flowchart LR
   API --> PROFILE{Execution profile}
   PROFILE --> SIM[Simulator\nfixed or router-balanced]
   PROFILE --> OLLAMA[Ollama local\nollama-fixed]
-  PROFILE --> FOUNDRY[Microsoft Foundry\nfixed or Model Router]
+  PROFILE --> FOUNDRY[Microsoft Foundry\nfixed, default router, or advanced router]
   API --> EVENTS[Versioned telemetry]
   EVENTS --> KAFKA[(Kafka / KRaft)]
   KAFKA --> VIEW[Idempotent projector]
@@ -91,7 +93,7 @@ component and failure boundaries.
 | --- | --- | --- | --- |
 | `simulated` (default) | None | `fixed`, `router-balanced` | No provider network call |
 | `ollama` | None | `ollama-fixed` | Loopback OpenAI-compatible `/v1/responses` |
-| `foundry` | Microsoft Entra | `fixed`, plus `router-balanced` when configured | Foundry project endpoint |
+| `foundry` | Microsoft Entra | `fixed`, `router-default`, `router-advanced` when configured | Foundry project endpoint |
 
 There is no automatic Ollama-to-Foundry fallback. Selecting `ollama` either
 uses the configured local endpoint or fails visibly; it never turns a local run
@@ -149,8 +151,9 @@ EVENT_TRANSPORT=kafka \
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
 FOUNDRY_PROJECT_ENDPOINT='https://YOUR-RESOURCE.services.ai.azure.com/api/projects/YOUR-PROJECT' \
 FOUNDRY_MODEL='YOUR-FIXED-DEPLOYMENT' \
-FOUNDRY_ROUTER_MODEL='YOUR-MODEL-ROUTER-DEPLOYMENT' \
-FOUNDRY_ROUTER_PROFILE='balanced' \
+FOUNDRY_ROUTER_DEFAULT_MODEL='YOUR-DEFAULT-BALANCED-ROUTER' \
+FOUNDRY_ROUTER_ADVANCED_MODEL='YOUR-ADVANCED-ROUTER' \
+FOUNDRY_ROUTER_ADVANCED_PROFILE='cost' \
 MAX_CLOUD_REQUESTS_PER_RUN=10 \
 java -jar target/foundry-stream-lab.jar
 ```
@@ -167,11 +170,19 @@ Open [http://127.0.0.1:5173](http://127.0.0.1:5173). The development server
 proxies `/api` to the Java gateway. More setup and managed-identity guidance is
 in [docs/foundry.md](docs/foundry.md).
 
-`FOUNDRY_ROUTER_PROFILE` is display/validation metadata for the demo. Configure
-Balanced, Cost, or Quality behavior on the Model Router deployment in Foundry
-or infrastructure-as-code; changing the environment value does not reconfigure
-the deployment per request. Live Foundry access has not been verified by this
-repository's local automated test suite.
+`FOUNDRY_ROUTER_ADVANCED_PROFILE` is display/validation metadata. Configure
+Balanced, Cost, or Quality behavior on each Model Router deployment in Foundry
+or infrastructure-as-code; changing an environment value does not reconfigure
+the deployment per request. The legacy `FOUNDRY_ROUTER_MODEL` and
+`FOUNDRY_ROUTER_PROFILE` pair remains supported for existing single-router
+setups.
+
+The repository includes repeatable Azure provisioning under `infra/`, a pinned
+wrapper around Microsoft's Model Router Auto Evaluation toolkit under
+`tools/eval/`, and a content-redacted managed tracing smoke test under
+`tools/foundry/`. See [the Foundry guide](docs/foundry.md) for the complete live
+workflow and the boundaries of the recorded verification; the aggregate benchmark
+is recorded in [the live evaluation note](docs/live-evaluation.md).
 
 ## Privacy boundary
 

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "dataset": "datasets/kafka-demo.jsonl",
+  "fixed_baseline_env": "AZURE_BASELINE_DEPLOYMENT",
+  "judge_deployment_env": "AZURE_JUDGE_DEPLOYMENT",
+  "profiles": {
+    "basic": {
+      "router_deployment_env": "AZURE_MODEL_ROUTER_BASIC_DEPLOYMENT",
+      "description": "Default Balanced Model Router deployment using the full supported model set."
+    },
+    "advanced": {
+      "router_deployment_env": "AZURE_MODEL_ROUTER_ADVANCED_DEPLOYMENT",
+      "description": "Separately deployed custom routing mode and/or model-subset Model Router deployment."
+    }
+  }
+}

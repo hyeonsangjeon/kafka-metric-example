@@ -72,12 +72,34 @@ public final class Main {
         return switch (config.aiMode()) {
             case SIMULATED -> new SimulatedProvider(vertx);
             case OLLAMA -> new OllamaProvider(config.ollamaBaseUrl(), config.ollamaModel());
-            case FOUNDRY -> new FoundryProvider(
-                    config.foundryProjectEndpoint(),
-                    config.foundryModel(),
-                    config.foundryRouterModel(),
-                    config.foundryRouterProfile());
+            case FOUNDRY -> createFoundryProvider(foundryProviderSettings(config));
         };
+    }
+
+    private static FoundryProvider createFoundryProvider(FoundryProviderSettings settings) {
+        return new FoundryProvider(
+                settings.projectEndpoint(),
+                settings.fixedModel(),
+                settings.defaultRouterModel(),
+                settings.advancedRouterModel(),
+                settings.advancedRouterProfile());
+    }
+
+    static FoundryProviderSettings foundryProviderSettings(AppConfig config) {
+        return new FoundryProviderSettings(
+                config.foundryProjectEndpoint(),
+                config.foundryModel(),
+                config.foundryRouterDefaultModel(),
+                config.foundryRouterAdvancedModel(),
+                config.foundryRouterAdvancedProfile());
+    }
+
+    record FoundryProviderSettings(
+            String projectEndpoint,
+            String fixedModel,
+            String defaultRouterModel,
+            String advancedRouterModel,
+            String advancedRouterProfile) {
     }
 
     private static JsonObject snapshot(

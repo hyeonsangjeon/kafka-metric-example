@@ -6,6 +6,7 @@ import dev.hyeonsangjeon.observatory.model.Scenario;
 import dev.hyeonsangjeon.observatory.model.Workload;
 import dev.hyeonsangjeon.observatory.projection.ProjectionStore;
 import dev.hyeonsangjeon.observatory.provider.AiProvider;
+import dev.hyeonsangjeon.observatory.provider.ModelProfile;
 import dev.hyeonsangjeon.observatory.runner.WorkloadRunner;
 import dev.hyeonsangjeon.observatory.stream.SseHub;
 import dev.hyeonsangjeon.observatory.transport.TransportSelection;
@@ -176,14 +177,15 @@ public final class ApiVerticle extends AbstractVerticle {
             if (modelId != null && modelProfile != null && !modelId.equals(modelProfile)) {
                 throw new IllegalArgumentException("modelId and modelProfile must match when both are provided");
             }
-            String selectedProfile = modelProfile != null
+            String requestedProfile = modelProfile != null
                     ? modelProfile
                     : modelId != null ? modelId : provider.defaultModelProfile();
-            provider.requireModelProfile(selectedProfile);
+            ModelProfile selectedProfile = provider.requireModelProfile(requestedProfile);
             if (traffic > maxTraffic()) {
                 throw new IllegalArgumentException("traffic exceeds the configured per-run limit of " + maxTraffic());
             }
-            RunRequest runRequest = new RunRequest(workload, traffic, scenario, prompt, selectedProfile);
+            RunRequest runRequest = new RunRequest(
+                    workload, traffic, scenario, prompt, selectedProfile.id());
             WorkloadRunner.StartResult result = runner.start(runRequest);
             if (!result.accepted()) {
                 error(context, 409, "RUN_ALREADY_ACTIVE", "Only one workload run can be active");
@@ -192,7 +194,7 @@ public final class ApiVerticle extends AbstractVerticle {
             json(context, 202, new JsonObject()
                     .put("runId", result.runId())
                     .put("status", result.status())
-                    .put("modelProfile", selectedProfile));
+                    .put("modelProfile", selectedProfile.id()));
         } catch (DecodeException exception) {
             error(context, 422, "INVALID_RUN_REQUEST", "Request body must be valid JSON");
         } catch (IllegalArgumentException | ClassCastException exception) {
