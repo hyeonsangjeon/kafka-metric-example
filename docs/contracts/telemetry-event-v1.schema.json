@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hyeonsangjeon/kafka-metric-example/blob/master/docs/contracts/telemetry-event-v1.schema.json",
+  "title": "Foundry Stream Lab telemetry event v1",
+  "description": "Privacy-safe lifecycle metadata published to Kafka. Raw AI payloads and infrastructure identifiers are forbidden by this contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "session_id",
+    "run_id",
+    "emitted_at",
+    "provider_alias",
+    "workload",
+    "scenario",
+    "sequence",
+    "details"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "enum": [
+        "RUN_STARTED",
+        "REQUEST_STARTED",
+        "RESPONSE_COMPLETED",
+        "RESPONSE_FAILED",
+        "RESPONSE_THROTTLED",
+        "CONSUMER_LAGGED",
+        "RUN_COMPLETED",
+        "RUN_STOPPED"
+      ]
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "trace_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "emitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provider_alias": {
+      "type": "string",
+      "enum": ["simulated", "ollama-local", "foundry"]
+    },
+    "workload": {
+      "type": "string",
+      "enum": ["chat", "summarize", "extract"]
+    },
+    "scenario": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "model_throttling",
+        "consumer_slowdown",
+        "duplicate_delivery",
+        "hot_partition"
+      ]
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "partition_hint": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "details": {
+      "$ref": "#/$defs/details"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["synthetic"],
+      "properties": {
+        "prompt_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "prompt_chars": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8000
+        },
+        "response_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "response_chars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "error_code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "synthetic": {
+          "type": "boolean"
+        },
+        "observed_lag": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_traffic": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "signal_source": {
+          "type": "string",
+          "enum": ["modeled", "measured"]
+        },
+        "model_profile": {
+          "description": "Public execution-profile identifier, never a provider deployment name.",
+          "type": "string",
+          "enum": ["fixed", "router-balanced", "ollama-fixed"]
+        },
+        "route_strategy": {
+          "description": "Configured fixed/router strategy. Foundry router mode is set on the deployment, not per request.",
+          "type": "string",
+          "enum": ["fixed", "balanced", "cost", "quality"]
+        },
+        "selected_route": {
+          "description": "Bounded privacy-safe route alias from a hardcoded mapping.",
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,64}$"
+        },
+        "model_family": {
+          "description": "Human-readable privacy-safe model-family label from a hardcoded mapping; never a raw model or deployment identifier.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9 ._-]+$"
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

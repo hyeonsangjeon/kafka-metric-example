@@ -1,0 +1,11 @@
+Foundry Stream Lab
+Copyright 2019-2026 Hyeonsang Jeon
+
+This repository began as a dashboard derived from the Apache Vert.x
+`vertx-examples/kafka-examples` project. The 2026 rewrite removed the legacy
+source code and bundled third-party UI assets, while retaining this notice to
+preserve project provenance.
+
+Apache Vert.x and Apache Kafka are trademarks of their respective owners.
+Microsoft Foundry is a trademark of Microsoft Corporation. This project is an
+independent open-source demonstration and is not an official Microsoft product.
