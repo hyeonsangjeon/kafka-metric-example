@@ -1,0 +1,11 @@
+.git
+.github
+.env
+.data
+**/node_modules
+**/dist
+**/target
+**/coverage
+docs/design
+*.log
+.DS_Store
