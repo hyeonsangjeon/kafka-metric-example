@@ -1,0 +1,65 @@
+{
+  "mode": "foundry",
+  "transport": "memory",
+  "cloudReady": true,
+  "maxTrafficPerRun": 10,
+  "modelProfiles": [
+    {
+      "id": "fixed",
+      "label": "Fixed deployment",
+      "strategy": "fixed",
+      "description": "Every request uses one configured Foundry deployment.",
+      "router": false
+    },
+    {
+      "id": "router-default",
+      "label": "Model Router · Default Balanced",
+      "strategy": "balanced",
+      "description": "The default Balanced deployment routes across its configured model set.",
+      "router": true
+    },
+    {
+      "id": "router-advanced",
+      "label": "Model Router · Advanced Cost",
+      "strategy": "cost",
+      "description": "The advanced deployment applies its configured routing mode and model subset.",
+      "router": true
+    }
+  ],
+  "comparison": {
+    "available": true,
+    "unavailableReason": null,
+    "profiles": [
+      {
+        "id": "fixed",
+        "label": "Fixed deployment",
+        "kind": "fixed",
+        "routeStrategy": "fixed"
+      },
+      {
+        "id": "router-default",
+        "label": "Model Router · Default Balanced",
+        "kind": "router",
+        "routeStrategy": "balanced"
+      },
+      {
+        "id": "router-advanced",
+        "label": "Model Router · Advanced Cost",
+        "kind": "router",
+        "routeStrategy": "cost"
+      }
+    ],
+    "profileCount": 3,
+    "trafficSemantics": "per-profile",
+    "defaultTrafficPerProfile": 3,
+    "maxTrafficPerProfile": 3,
+    "providerInvocationLimit": 10
+  },
+  "defaults": {
+    "workload": "chat",
+    "traffic": 10,
+    "scenario": "healthy",
+    "modelId": "fixed",
+    "modelProfile": "fixed"
+  }
+}

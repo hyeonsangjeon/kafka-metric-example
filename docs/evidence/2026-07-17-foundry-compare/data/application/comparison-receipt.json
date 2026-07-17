@@ -1,0 +1,12 @@
+{
+  "comparisonId": "comparison-demo",
+  "status": "running",
+  "profiles": [
+    "fixed",
+    "router-default",
+    "router-advanced"
+  ],
+  "trafficPerProfile": 1,
+  "plannedRequests": 3,
+  "providerInvocationLimit": 10
+}

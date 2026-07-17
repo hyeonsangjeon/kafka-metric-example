@@ -1,0 +1,107 @@
+{
+  "comparisonId": "comparison-demo",
+  "status": "completed",
+  "workload": "chat",
+  "scenario": "healthy",
+  "trafficPerProfile": 1,
+  "profiles": [
+    "fixed",
+    "router-default",
+    "router-advanced"
+  ],
+  "currentProfile": null,
+  "plannedRequests": 3,
+  "providerInvocations": 3,
+  "providerInvocationLimit": 10,
+  "startedAt": "2026-07-17T03:37:11.967577Z",
+  "completedAt": "2026-07-17T03:37:25.498088Z",
+  "phases": [
+    {
+      "profile": "fixed",
+      "label": "Fixed deployment",
+      "kind": "fixed",
+      "routeStrategy": "fixed",
+      "status": "completed",
+      "runId": "phase-fixed",
+      "requested": 1,
+      "completed": 1,
+      "failed": 0,
+      "retries": 0,
+      "successRate": 100.0,
+      "p50LatencyMs": 5207,
+      "p95LatencyMs": 5207,
+      "inputTokens": 26,
+      "outputTokens": 46,
+      "tokenSamples": 1,
+      "models": [
+        {
+          "modelFamily": "GPT-5.4 mini",
+          "count": 1,
+          "percentage": 100.0
+        }
+      ],
+      "p95DeltaMs": 0,
+      "p95DeltaPercent": 0.0,
+      "totalTokensDelta": 0,
+      "totalTokensDeltaPercent": 0.0
+    },
+    {
+      "profile": "router-default",
+      "label": "Model Router · Default Balanced",
+      "kind": "router",
+      "routeStrategy": "balanced",
+      "status": "completed",
+      "runId": "phase-router-default",
+      "requested": 1,
+      "completed": 1,
+      "failed": 0,
+      "retries": 0,
+      "successRate": 100.0,
+      "p50LatencyMs": 5210,
+      "p95LatencyMs": 5210,
+      "inputTokens": 32,
+      "outputTokens": 471,
+      "tokenSamples": 1,
+      "models": [
+        {
+          "modelFamily": "GPT-5 mini",
+          "count": 1,
+          "percentage": 100.0
+        }
+      ],
+      "p95DeltaMs": 3,
+      "p95DeltaPercent": 0.1,
+      "totalTokensDelta": 431,
+      "totalTokensDeltaPercent": 598.6
+    },
+    {
+      "profile": "router-advanced",
+      "label": "Model Router · Advanced Cost",
+      "kind": "router",
+      "routeStrategy": "cost",
+      "status": "completed",
+      "runId": "phase-router-advanced",
+      "requested": 1,
+      "completed": 1,
+      "failed": 0,
+      "retries": 0,
+      "successRate": 100.0,
+      "p50LatencyMs": 3105,
+      "p95LatencyMs": 3105,
+      "inputTokens": 32,
+      "outputTokens": 58,
+      "tokenSamples": 1,
+      "models": [
+        {
+          "modelFamily": "GPT-5.4 nano",
+          "count": 1,
+          "percentage": 100.0
+        }
+      ],
+      "p95DeltaMs": -2102,
+      "p95DeltaPercent": -40.4,
+      "totalTokensDelta": 18,
+      "totalTokensDeltaPercent": 25.0
+    }
+  ]
+}

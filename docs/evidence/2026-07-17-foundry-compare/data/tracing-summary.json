@@ -1,0 +1,90 @@
+{
+  "capturedAtUtc": "2026-07-17T03:51:43Z",
+  "source": "Application Insights backed by Log Analytics",
+  "queryWindow": "PT1H",
+  "smokeOperations": 3,
+  "dependencyRows": 6,
+  "successfulDependencies": 6,
+  "profiles": [
+    {
+      "profile": "fixed",
+      "requestModel": "gpt-5.4-mini",
+      "responseModel": "gpt-5.4-mini",
+      "calls": 1,
+      "durationMs": 2316,
+      "inputTokens": 20,
+      "outputTokens": 38,
+      "successes": 1
+    },
+    {
+      "profile": "router-default",
+      "requestModel": "model-router-default",
+      "responseModel": "gpt-5-mini-2025-08-07",
+      "calls": 1,
+      "durationMs": 3507,
+      "inputTokens": 30,
+      "outputTokens": 313,
+      "successes": 1
+    },
+    {
+      "profile": "router-advanced",
+      "requestModel": "model-router-cost",
+      "responseModel": "gpt-5.4-nano-2026-03-17",
+      "calls": 1,
+      "durationMs": 2649,
+      "inputTokens": 30,
+      "outputTokens": 39,
+      "successes": 1
+    }
+  ],
+  "contentCaptureAudit": {
+    "knownPromptMatches": 0,
+    "knownResponsePhraseMatches": 0,
+    "inputMessageShape": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "outputMessageShape": [
+      {
+        "role": "assistant",
+        "parts": [
+          {
+            "type": "text"
+          }
+        ],
+        "finish_reason": "completed"
+      }
+    ],
+    "messageTextPresent": false,
+    "rawPropertiesExported": false
+  },
+  "propertyKeysObserved": [
+    "_MS.GenAIContentId",
+    "_MS.ResourceAttributeId",
+    "az.namespace",
+    "foundry.stream_lab.profile",
+    "gen_ai.input.messages",
+    "gen_ai.operation.name",
+    "gen_ai.output.messages",
+    "gen_ai.provider.name",
+    "gen_ai.request.model",
+    "gen_ai.response.id",
+    "gen_ai.response.model",
+    "gen_ai.usage.input_tokens",
+    "gen_ai.usage.output_tokens"
+  ],
+  "removedFromExport": [
+    "operation IDs",
+    "trace IDs",
+    "request IDs",
+    "response IDs",
+    "raw Properties bags",
+    "workspace and resource IDs"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "capturedAtUtc": "2026-07-17T03:33:11Z",
+  "release": "v1.2.0",
+  "commit": "6950b5265a6f58de6a0a52897505989a3d7fe1e3",
+  "githubRelease": "https://github.com/hyeonsangjeon/kafka-metric-example/releases/tag/v1.2.0",
+  "container": "ghcr.io/hyeonsangjeon/kafka-metric-example:1.2.0",
+  "indexDigest": "sha256:671aac617933abbc35d3bc06b0ab695f83bf6d9e4090217e4a630cf19c068789",
+  "platforms": [
+    {
+      "os": "linux",
+      "architecture": "amd64",
+      "manifestDigest": "sha256:fc0812c60be5dbdfa58acd91d20ba8f03abcd737844aa2c50b2e0cbe6f5fe5d2"
+    },
+    {
+      "os": "linux",
+      "architecture": "arm64",
+      "manifestDigest": "sha256:2afff23b65b4f5129cb1ada09acd56b42e4176f41e95bae17d3ca0ad0993c1d9"
+    }
+  ],
+  "supplyChain": {
+    "githubAttestationVerified": true,
+    "sourceCommitVerified": true,
+    "spdxSbomPerPlatform": true,
+    "slsaProvenancePerPlatform": true
+  }
+}
