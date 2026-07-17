@@ -15,7 +15,7 @@ bb960e815d6ba39717040e0f6357c5f0dd96147b6bc0f61a0c52fcef52c72334  ./data/applica
 e920ab0b5a308f33694351c4fb3b64ee0e31f3a59c682a565e1080ced2e0f47a  ./data/application/comparison-result.json
 54432b48a54e6e58f213149988436e9826641cc474c769397d0dd1824a165624  ./data/application/configuration-summary.json
 4c0e5ad0f7c825f79a62d1a8bb244571069d24823e18c4a3e9f2832293565cbf  ./data/application/health-summary.json
-1c70380464dd56e65924ca1cdc51092d9bddf3e4ab5fe6585d61dd9c1c5178a2  ./data/cleanup-summary.json
+2ccd09794c3a27a3db93a586e5a95a0df83c6e8d48b23fad5b495032e77149be  ./data/cleanup-summary.json
 d124d9c9546bcaf3ad0eb023d27190ba339da59e54173215e924d92fe375a516  ./data/evaluation-summary.json
 a16964f0edd5af7af3f064fce3f2b2f9e52c04e59104446e8b5b0ab4a419b43c  ./data/infrastructure-summary.json
 0b171bd17927c46491f94cf922c28489eb1bdc23c85b56b3874899ae1ac791db  ./data/release-summary.json

@@ -20,11 +20,15 @@
     "writeOperations": 0
   },
   "apply": {
-    "acceptedAtUtc": "2026-07-17T04:03:54Z",
-    "completedAtUtc": "2026-07-17T04:05:38Z",
-    "resourceGroupDeletion": true,
-    "foundryAccountPurge": true,
+    "commandStartedAtUtc": "2026-07-17T04:03:54Z",
+    "commandReturnedAtUtc": "2026-07-17T04:05:38Z",
+    "resourceGroupDeletionRequested": true,
+    "foundryAccountPurgeRequested": true,
     "exitCode": 0
+  },
+  "azureControlPlane": {
+    "resourceGroupDeletionSucceededAtUtc": "2026-07-17T04:04:59.5852506Z",
+    "foundryAccountPurgeSucceededAtUtc": "2026-07-17T04:05:54.4811766Z"
   },
   "postCleanupVerification": {
     "verifiedAtUtc": "2026-07-17T04:06:29Z",
