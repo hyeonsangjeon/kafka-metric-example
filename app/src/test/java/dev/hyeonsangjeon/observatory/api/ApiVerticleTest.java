@@ -54,7 +54,13 @@ class ApiVerticleTest {
                 vertx, provider, transport, store::sessionId);
         SseHub hub = new SseHub(vertx);
         ApiVerticle api = new ApiVerticle(
-                config, selection, provider, store, runner, hub, store::snapshot);
+                config,
+                selection,
+                provider,
+                store,
+                runner,
+                hub,
+                () -> store.snapshot().put("comparison", runner.comparisonSnapshot()));
 
         vertx.deployVerticle(api).toCompletionStage().toCompletableFuture()
                 .get(3, TimeUnit.SECONDS);
@@ -114,6 +120,26 @@ class ApiVerticleTest {
         assertEquals("ollama-fixed", provider.invoked.get(3, TimeUnit.SECONDS).modelProfile());
     }
 
+    @Test
+    void ollamaExplicitlyReportsComparisonAsUnavailable() throws Exception {
+        HttpResponse<String> configResponse = get("/api/v1/config");
+        HttpResponse<String> snapshotResponse = get("/api/v1/snapshot");
+        HttpResponse<String> comparisonResponse = postComparison(new JsonObject()
+                .put("traffic", 1));
+
+        JsonObject capability = new JsonObject(configResponse.body())
+                .getJsonObject("comparison");
+        assertFalse(capability.getBoolean("available"));
+        assertEquals("provider_exposes_fewer_than_two_profiles",
+                capability.getString("unavailableReason"));
+        assertEquals("ollama-fixed", capability.getJsonArray("profiles")
+                .getJsonObject(0).getString("id"));
+        assertTrue(new JsonObject(snapshotResponse.body()).containsKey("comparison"));
+        assertEquals(422, comparisonResponse.statusCode());
+        assertEquals("COMPARISON_UNAVAILABLE", new JsonObject(comparisonResponse.body())
+                .getJsonObject("error").getString("code"));
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         return HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path)).GET().build(),
@@ -123,6 +149,16 @@ class ApiVerticleTest {
     private HttpResponse<String> post(JsonObject body) throws Exception {
         return HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1/runs"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body.encode()))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postComparison(JsonObject body) throws Exception {
+        return HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(
+                                "http://127.0.0.1:" + port + "/api/v1/comparisons"))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(body.encode()))
                         .build(),

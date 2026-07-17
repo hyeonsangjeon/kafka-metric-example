@@ -5,6 +5,7 @@ The implementation is based on these generated product-design references:
 - [`dashboard-concept-desktop.png`](./dashboard-concept-desktop.png)
 - [`dashboard-concept-mobile.png`](./dashboard-concept-mobile.png)
 - [`model-router-concept-desktop.png`](./model-router-concept-desktop.png)
+- [`compare-run-concept-desktop.png`](./compare-run-concept-desktop.png)
 
 These concepts are design references, not screenshots of measured production
 traffic. The shipped UI uses code-native controls, labels, charts, and events.
@@ -41,6 +42,40 @@ shadows are minimal; nested cards are avoided.
 6. Live event feed and recent traces.
 7. Trace detail drawer with lifecycle waterfall and delivery observation.
 8. System map that explicitly separates request and telemetry paths.
+9. Profile comparison: one bounded, sequential execution across the provider's
+   available fixed/default/advanced profiles.
+
+## Compare Run inventory
+
+The comparison surface reuses the existing shell, `panel`, button, status, and
+tabular metric primitives. It does not introduce a second visual system.
+
+| Element | Implementation rule |
+| --- | --- |
+| Placement | Directly below Run console and above the session KPI rail |
+| Header | Title, text status, provider-call budget, visibly labelled `Export JSON` action |
+| Phase strip | Ordered fixed → default → advanced phases with icon + text state and child run ID |
+| Results | Three scan-aligned columns on wide screens; one column at `760px` and below |
+| Baseline | Fixed deployment is labelled `Baseline`; deltas always compare with it |
+| Metrics | Requests, success, p50/p95, retries, tokens, and selected model mix only |
+| State color | Selection blue, completed green, queued muted, retry/stopped amber, failed red |
+| Privacy | Footer states that prompt and response bodies are neither retained nor exported |
+
+Comparison cards use the same 8–12px radii, one-pixel `Divider` borders, compact
+label/value rows, and monospace IDs as the trace surfaces. There are no card
+shadows, monetary savings claims, or decorative charts. Model-mix bars are
+accessible summaries backed by adjacent text labels; color is never the only
+carrier of meaning.
+
+The Run console keeps `Run workload` as its primary action and adds `Compare
+profiles` as a secondary action. Supporting copy is fixed to `Sequential
+comparison · same input · bounded calls.` Traffic means requests per profile;
+the control must expose the server-provided comparison limit before submission.
+
+Comparison progress is announced politely only at meaningful state changes.
+The active panel uses `aria-busy`, every phase has a unique heading, and stopped
+or failed phases retain explicit text and icon labels. Under
+`prefers-reduced-motion`, progress and model-mix transitions are immediate.
 
 ## Allowed first-viewport copy
 

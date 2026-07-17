@@ -32,6 +32,7 @@ interface AppShellProps extends PropsWithChildren {
   onToggleStream: () => void
   onReset: () => void
   resetPending: boolean
+  resetDisabled: boolean
   mobileMenuOpen: boolean
   onMobileMenuChange: (open: boolean) => void
   providerMode: 'simulated' | 'ollama' | 'foundry' | 'unknown'
@@ -56,6 +57,7 @@ export function AppShell({
   onToggleStream,
   onReset,
   resetPending,
+  resetDisabled,
   mobileMenuOpen,
   onMobileMenuChange,
   providerMode,
@@ -96,7 +98,7 @@ export function AppShell({
         <div className="sidebar__footer">
           <div className="privacy-mini"><ShieldCheck size={15} /><span>Payload bodies private</span></div>
           <div className="lab-running"><StatusDot status={connection} /><span>{connection === 'connected' ? 'Lab connected' : 'Lab offline'}</span></div>
-          <span className="version">v1.1.0</span>
+          <span className="version">v1.2.0</span>
         </div>
       </aside>
 
@@ -137,7 +139,7 @@ export function AppShell({
               {streamPaused ? <Play size={15} /> : <Pause size={15} />}
               <span>{streamPaused ? 'Resume stream' : 'Pause stream'}</span>
             </button>
-            <button className="toolbar-button" onClick={onReset} disabled={resetPending}>
+            <button className="toolbar-button" onClick={onReset} disabled={resetDisabled}>
               <RotateCcw size={15} className={resetPending ? 'spin' : ''} />
               <span>Reset session</span>
             </button>

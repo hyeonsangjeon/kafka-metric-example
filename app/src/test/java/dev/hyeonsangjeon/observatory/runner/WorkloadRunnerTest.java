@@ -106,6 +106,41 @@ class WorkloadRunnerTest {
         assertTrue(transport.events().isEmpty());
     }
 
+    @Test
+    void foundryRunRetryCannotExceedTheConfiguredProviderInvocationLimit() throws Exception {
+        AtomicInteger providerCalls = new AtomicInteger();
+        AiProvider provider = new AiProvider() {
+            @Override
+            public String alias() {
+                return "foundry";
+            }
+
+            @Override
+            public boolean synthetic() {
+                return false;
+            }
+
+            @Override
+            public CompletableFuture<ProviderResult> invoke(ProviderRequest request) {
+                providerCalls.incrementAndGet();
+                return CompletableFuture.failedFuture(
+                        new ProviderFailure("MODEL_RATE_LIMITED", true, null));
+            }
+        };
+        RecordingTransport transport = new RecordingTransport(
+                ignored -> CompletableFuture.completedFuture(null));
+        WorkloadRunner runner = new WorkloadRunner(
+                vertx, provider, transport, () -> "session-cloud-budget", 1);
+
+        WorkloadRunner.StartResult start = runner.start(request());
+
+        assertTrue(start.accepted());
+        transport.runCompleted().get(2, TimeUnit.SECONDS);
+        assertEquals(1, providerCalls.get());
+        assertEquals("MODEL_REQUEST_BUDGET_EXHAUSTED",
+                transport.only(EventType.RESPONSE_FAILED).details().errorCode());
+    }
+
     private void assertProviderInvoked(CompletableFuture<Void> publishResult) {
         AtomicInteger providerCalls = new AtomicInteger();
         AiProvider provider = new FakeProvider(request -> {

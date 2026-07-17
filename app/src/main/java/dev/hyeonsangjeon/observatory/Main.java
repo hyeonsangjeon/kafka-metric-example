@@ -36,9 +36,13 @@ public final class Main {
         AiProvider provider = createProvider(config, vertx);
         TransportSelection transportSelection = TransportSelection.create(config, vertx);
         WorkloadRunner runner = new WorkloadRunner(
-                vertx, provider, transportSelection.transport(), store::sessionId);
+                vertx,
+                provider,
+                transportSelection.transport(),
+                store::sessionId,
+                config.maxCloudRequestsPerRun());
         Supplier<JsonObject> snapshotSupplier = () -> snapshot(
-                store, config, transportSelection);
+                store, runner, config, transportSelection);
 
         transportSelection.transport().start(delivery -> vertx.runOnContext(ignored -> {
             boolean accepted = store.accept(delivery);
@@ -104,9 +108,12 @@ public final class Main {
 
     private static JsonObject snapshot(
             ProjectionStore store,
+            WorkloadRunner runner,
             AppConfig config,
             TransportSelection selection) {
-        return store.snapshot().put("health", new JsonObject()
+        return store.snapshot()
+                .put("comparison", runner.comparisonSnapshot())
+                .put("health", new JsonObject()
                 .put("kafka", selection.transport().healthy() ? "healthy" : "offline")
                 .put("foundry", config.aiMode() != AppConfig.AiMode.FOUNDRY
                         || config.foundryConfigured() ? "healthy" : "degraded"));

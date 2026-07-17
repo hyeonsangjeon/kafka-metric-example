@@ -10,7 +10,7 @@ disposable demo; its preserved results and cleanup state are in
 
 | Path | Credentials | Profiles | Paid cloud calls |
 | --- | --- | --- | --- |
-| Simulator | None | `fixed`, `router-balanced` | No |
+| Simulator | None | `fixed`, `router-default`, `router-advanced` | No |
 | Ollama | None | `ollama-fixed` | No |
 | Foundry | Microsoft Entra | `fixed`, `router-default`, `router-advanced` | Yes |
 
@@ -28,12 +28,14 @@ docker compose up --build
 Open `http://127.0.0.1:8080`, then use this repeatable sequence:
 
 1. Reset the session.
-2. Select **Chat**, **Healthy**, traffic `20`, and **Fixed deployment**.
-3. Run to completion and record the KPI rail and fixed 100% route.
-4. Reset, keep the same input, and select **Model Router · Balanced**.
-5. Run to completion. The deterministic simulator produces Fast 8, General 8,
-   and Reasoning 4 for this exact input.
-6. Reset and run **Model throttling** with traffic `12`; four requests retry once.
+2. Select **Chat**, **Healthy**, and traffic `3` per profile.
+3. Select **Compare profiles**. The gateway runs Fixed, Default Balanced, then
+   Advanced Cost with the same input and no overlap.
+4. Review the three result cards and export the privacy-safe JSON.
+5. For a larger single-profile routing mix, run the Default profile separately
+   with traffic `20` after the comparison completes.
+6. Reset and run **Model throttling** with traffic `9` to show one retry. The
+   cloud provider-call cap does not apply to a standalone simulator run.
 7. Reset and run **Duplicate delivery** with traffic `20`; five duplicates are
    dropped without double-counting outcomes.
 
@@ -118,14 +120,12 @@ Use one public prompt and keep every other input unchanged:
 Explain one practical Kafka reliability signal.
 ```
 
-For each profile:
-
 1. Reset the session.
-2. Select **Chat**, **Healthy**, and the same traffic value.
-3. Select `fixed`, `router-default`, or `router-advanced`.
-4. Run to completion.
+2. Select **Chat**, **Healthy**, traffic `1` per profile, and the public prompt.
+3. Select **Compare profiles** once.
+4. Wait for Fixed → Default → Advanced to complete in order.
 5. Record status, selected route/model family, latency, input/output tokens,
-   Kafka lag, and the content-free trace row.
+   baseline deltas, Kafka lag, and the content-free comparison export.
 
 Routing is observational. Do not promise which model a router will select. In
 the preserved one-request run, fixed selected GPT-5.4 mini, default Balanced
@@ -190,13 +190,25 @@ sanitized aggregates.
 
 Before deletion:
 
-1. Capture the resource/deployment inventory without identity or resource IDs.
-2. Export dashboard, evaluation, tracing, usage, and cost-delay summaries.
-3. Capture desktop and mobile screenshots.
-4. Run `./infra/verify.sh` and the cleanup dry-run.
-5. Scan the evidence for credentials, IDs, endpoint URLs, absolute local paths,
-   and raw payloads.
-6. Commit, push, review, and merge the evidence.
+1. Run the released application and capture its allowlisted comparison result:
+
+   ```bash
+   export SOURCE_VERSION='v1.2.0'
+   export SOURCE_COMMIT="$(git rev-parse 'v1.2.0^{commit}')"
+   export SOURCE_ARTIFACT='ghcr.io/hyeonsangjeon/kafka-metric-example@sha256:RELEASE_DIGEST'
+   ./tools/evidence/capture_comparison.sh \
+     docs/evidence/YYYY-MM-DD-foundry-compare/data/application
+   ```
+
+2. Capture the resource/deployment inventory without identity or resource IDs.
+3. Export dashboard, evaluation, tracing, usage, and cost-delay summaries.
+4. Capture desktop and mobile screenshots and record the release tag, commit,
+   container digest, host architecture, and tool versions in the manifest.
+5. Run `./infra/verify.sh` and the cleanup dry-run.
+6. Generate and verify checksums, then scan for credentials, IDs, endpoint URLs,
+   absolute local paths, and raw payloads.
+7. Commit, push, review, and merge this pre-deletion evidence. Do not delete the
+   Azure resource group until the merge is visible on the default branch.
 
 Then delete the dedicated resource group and release the Foundry account name:
 
@@ -211,4 +223,8 @@ Then delete the dedicated resource group and release the Foundry account name:
 If provisioning used name overrides, export the same overrides before every
 verify or cleanup command. After cleanup, confirm the resource group is absent
 and the account is no longer in the soft-deleted list. Subscription-level
-provider registrations intentionally remain.
+provider registrations intentionally remain. Record those read-only checks in a
+sanitized cleanup summary, update the evidence README/manifest, regenerate and
+verify checksums, scan again, then commit, review, and merge this second cleanup
+record. The two merges make the evidence durable before irreversible purge while
+still proving the purge afterward.

@@ -47,14 +47,15 @@ Official references:
 
 | Provider | Profiles exposed to the UI | Provider request |
 | --- | --- | --- |
-| `simulated` | `fixed`, `router-balanced` | None; seeded local behavior. |
+| `simulated` | `fixed`, `router-default`, `router-advanced` | None; deterministic local behavior. |
 | `ollama` | `ollama-fixed` | `POST {OLLAMA_BASE_URL}/responses`. |
 | `foundry` | `fixed`, plus either or both live router profiles | Foundry project Responses API. |
 
-The simulator's `router-balanced` profile is a deterministic teaching aid. It
-emits synthetic `fast`, `general`, and `reasoning` routes so the dashboard works
-before Azure resources exist. It is not a local implementation of Microsoft's
-Model Router.
+The simulator's default and advanced router profiles are deterministic teaching
+aids. They emit synthetic `fast`, `general`, and `reasoning` routes so the
+dashboard works before Azure resources exist. They are not local implementations
+of Microsoft's Model Router. `router-balanced` remains an input-only compatibility
+alias for `router-default`; it is not exposed in the UI.
 
 ## Environment reference
 
@@ -170,8 +171,11 @@ npm ci
 npm run dev
 ```
 
-Run `fixed`, `router-default`, and `router-advanced` without changing the prompt,
-workload, traffic, or failure scenario. Foundry's raw `response.model` value is
+Choose one public/synthetic input and select **Compare profiles**. The gateway
+runs `fixed`, `router-default`, and `router-advanced` sequentially without
+changing the prompt, workload, traffic, or failure scenario. Traffic is per
+profile, and `MAX_CLOUD_REQUESTS_PER_RUN` covers every provider entry across the
+whole comparison, including retries. Foundry's raw `response.model` value is
 reduced to a hardcoded family label before application telemetry is emitted; an
 unknown model becomes `other`.
 

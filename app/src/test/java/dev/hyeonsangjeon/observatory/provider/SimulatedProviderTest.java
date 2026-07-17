@@ -31,11 +31,12 @@ class SimulatedProviderTest {
     }
 
     @Test
-    void exposesFixedAndBalancedRouterProfiles() {
+    void exposesAllThreeComparisonProfilesAndKeepsTheLegacyAlias() {
         assertEquals(
-                java.util.List.of("fixed", "router-balanced"),
+                java.util.List.of("fixed", "router-default", "router-advanced"),
                 provider.modelProfiles().stream().map(ModelProfile::id).toList());
         assertEquals("fixed", provider.defaultModelProfile());
+        assertEquals("router-default", provider.requireModelProfile("router-balanced").id());
     }
 
     @Test
@@ -43,12 +44,15 @@ class SimulatedProviderTest {
         ProviderResult fast = invoke(Workload.CHAT, 1, "router-balanced");
         ProviderResult general = invoke(Workload.CHAT, 2, "router-balanced");
         ProviderResult reasoning = invoke(Workload.CHAT, 5, "router-balanced");
+        ProviderResult advanced = invoke(Workload.CHAT, 1, "router-advanced");
         ProviderResult fixed = invoke(Workload.CHAT, 5, "fixed");
 
         assertEquals("fast", fast.selectedRoute());
         assertEquals("general", general.selectedRoute());
         assertEquals("reasoning", reasoning.selectedRoute());
         assertEquals("balanced", reasoning.routeStrategy());
+        assertEquals("fast", advanced.selectedRoute());
+        assertEquals("cost", advanced.routeStrategy());
         assertEquals("fixed", fixed.selectedRoute());
         assertEquals("fixed", fixed.routeStrategy());
     }

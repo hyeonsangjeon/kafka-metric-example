@@ -1,21 +1,44 @@
-import { ChevronDown, Database, LoaderCircle, LockKeyhole, MessageSquareText, Play, Square, TriangleAlert } from 'lucide-react'
+import {
+  ChevronDown,
+  Database,
+  GitCompareArrows,
+  LoaderCircle,
+  LockKeyhole,
+  MessageSquareText,
+  Play,
+  Square,
+  TriangleAlert,
+} from 'lucide-react'
 import { useState } from 'react'
-import type { ConnectionState, LabConfig, RunInput, RunState } from '../types'
+import type { ComparisonInput, ComparisonState, ConnectionState, LabConfig, RunInput, RunState } from '../types'
 
 interface RunConsoleProps {
   config: LabConfig
   run: RunState | null
+  comparison: ComparisonState | null
   connection: ConnectionState
-  pending: 'run' | 'stop' | 'reset' | null
+  pending: 'run' | 'stop' | 'compare' | 'stop-comparison' | 'reset' | null
   onStart: (input: RunInput) => Promise<void>
   onStop: () => Promise<void>
+  onCompare: (input: ComparisonInput) => Promise<void>
+  onStopComparison: () => Promise<void>
 }
 
 function friendly(value: string): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-export function RunConsole({ config, run, connection, pending, onStart, onStop }: RunConsoleProps) {
+export function RunConsole({
+  config,
+  run,
+  comparison,
+  connection,
+  pending,
+  onStart,
+  onStop,
+  onCompare,
+  onStopComparison,
+}: RunConsoleProps) {
   const [workloadChoice, setWorkloadChoice] = useState('')
   const [scenarioChoice, setScenarioChoice] = useState('')
   const [profileChoice, setProfileChoice] = useState('')
@@ -28,11 +51,17 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
   const selectedProfile = profiles.find((profile) => profile.id === modelProfile)
   const maxTraffic = config.maxTrafficPerRun ?? 30
   const requestRate = Math.min(rateChoice ?? config.defaults.requestRate ?? 12, maxTraffic)
-  const isRunning = run?.status === 'running' || run?.status === 'starting' || run?.status === 'stopping'
-  const disabled = connection !== 'connected' || !workloadId || pending !== null
+  const maxComparisonTraffic = config.comparison?.maxTrafficPerProfile ?? maxTraffic
+  const comparisonTraffic = Math.min(requestRate, maxComparisonTraffic)
+  const runActive = run?.status === 'running' || run?.status === 'starting' || run?.status === 'stopping'
+  const comparisonActive = comparison?.status === 'queued' || comparison?.status === 'running'
+  const normalRunActive = runActive && !comparisonActive
+  const interactionActive = runActive || comparisonActive
+  const comparisonAvailable = config.comparison?.enabled === true
+  const cannotStart = connection !== 'connected' || !workloadId
 
-  const submit = async () => {
-    if (isRunning) {
+  const submitRun = async () => {
+    if (normalRunActive) {
       await onStop().catch(() => undefined)
       return
     }
@@ -43,6 +72,20 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
       modelProfile: modelProfile || undefined,
       modelId: modelProfile || undefined,
       requestRate,
+      prompt: prompt.trim() || undefined,
+    }).catch(() => undefined)
+  }
+
+  const submitComparison = async () => {
+    if (comparisonActive) {
+      await onStopComparison().catch(() => undefined)
+      return
+    }
+    if (!workloadId || !comparisonAvailable) return
+    await onCompare({
+      workload: workloadId,
+      scenario: scenarioId || undefined,
+      traffic: comparisonTraffic,
       prompt: prompt.trim() || undefined,
     }).catch(() => undefined)
   }
@@ -62,7 +105,7 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
           <span>Workload</span>
           <span className="select-field__control">
             <Database size={17} />
-            <select value={workloadId} onChange={(event) => setWorkloadChoice(event.target.value)} disabled={isRunning || !config.workloads.length}>
+            <select value={workloadId} onChange={(event) => setWorkloadChoice(event.target.value)} disabled={interactionActive || !config.workloads.length}>
               {!config.workloads.length ? <option value="">Waiting for config</option> : null}
               {config.workloads.map((option) => <option key={option.id} value={option.id}>{friendly(option.label)}</option>)}
             </select>
@@ -74,7 +117,7 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
           <span>Failure scenario</span>
           <span className="select-field__control">
             <TriangleAlert size={17} />
-            <select value={scenarioId} onChange={(event) => setScenarioChoice(event.target.value)} disabled={isRunning || !config.scenarios.length}>
+            <select value={scenarioId} onChange={(event) => setScenarioChoice(event.target.value)} disabled={interactionActive || !config.scenarios.length}>
               {!config.scenarios.length ? <option value="">Waiting for config</option> : null}
               {config.scenarios.map((option) => <option key={option.id} value={option.id}>{friendly(option.label)}</option>)}
             </select>
@@ -82,8 +125,8 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
           </span>
         </label>
 
-        <fieldset className="profile-field" disabled={isRunning || !profiles.length} aria-describedby="execution-profile-description">
-          <legend>Execution profile</legend>
+        <fieldset className="profile-field" disabled={interactionActive || !profiles.length} aria-describedby="execution-profile-description">
+          <legend>Execution profile <small>(single run)</small></legend>
           <div className="profile-field__options">
             {profiles.length ? profiles.map((profile) => {
               const isRouter = profile.kind === 'router' || profile.id.toLowerCase().includes('router')
@@ -120,17 +163,47 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
               max={maxTraffic}
               value={requestRate}
               onChange={(event) => setRateChoice(Number(event.target.value))}
-              disabled={isRunning}
+              disabled={interactionActive}
               aria-label="Requests per run"
             />
-            <output>{requestRate} requests</output>
+            <output>
+              <span>{requestRate} requests</span>
+              {comparisonAvailable && comparisonTraffic < requestRate
+                ? <small>Compare: {comparisonTraffic}/profile</small>
+                : null}
+            </output>
           </span>
         </label>
 
-        <button className={`primary-button ${isRunning ? 'primary-button--stop' : ''}`} onClick={submit} disabled={disabled && !isRunning}>
-          {pending === 'run' || pending === 'stop' ? <LoaderCircle className="spin" size={18} /> : isRunning ? <Square size={16} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
-          <span>{isRunning ? 'Stop workload' : connection === 'connected' ? 'Run workload' : 'Connect to run'}</span>
-        </button>
+        <div className="run-console__actions">
+          <button
+            className={`primary-button ${normalRunActive ? 'primary-button--stop' : ''}`}
+            onClick={submitRun}
+            disabled={pending !== null || comparisonActive || (!normalRunActive && cannotStart)}
+          >
+            {pending === 'run' || pending === 'stop'
+              ? <LoaderCircle className="spin" size={18} />
+              : normalRunActive
+                ? <Square size={16} fill="currentColor" />
+                : <Play size={18} fill="currentColor" />}
+            <span>{normalRunActive ? 'Stop workload' : connection === 'connected' ? 'Run workload' : 'Connect to run'}</span>
+          </button>
+
+          <button
+            className={`comparison-button ${comparisonActive ? 'comparison-button--stop' : ''}`}
+            onClick={submitComparison}
+            disabled={pending !== null || (!comparisonActive && (runActive || cannotStart || !comparisonAvailable))}
+            title={!comparisonAvailable ? config.comparison?.unavailableReason : undefined}
+          >
+            {pending === 'compare' || pending === 'stop-comparison'
+              ? <LoaderCircle className="spin" size={18} />
+              : comparisonActive
+                ? <Square size={15} fill="currentColor" />
+                : <GitCompareArrows size={18} />}
+            <span>{comparisonActive ? 'Stop comparison' : comparisonAvailable ? 'Compare profiles' : 'Compare unavailable'}</span>
+          </button>
+          <small>Sequential comparison · same input · bounded calls.</small>
+        </div>
 
         <label className="prompt-field">
           <span><MessageSquareText size={15} /> Prompt <small>optional</small></span>
@@ -139,7 +212,7 @@ export function RunConsole({ config, run, connection, pending, onStart, onStop }
             onChange={(event) => setPrompt(event.target.value)}
             placeholder="Use the workload's safe default, or enter a prompt for this run"
             maxLength={8_000}
-            disabled={isRunning}
+            disabled={interactionActive}
             rows={2}
           />
           <small>{prompt.length.toLocaleString()} / 8,000</small>

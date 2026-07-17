@@ -9,7 +9,7 @@ flowchart LR
   subgraph request[Request path]
     UI[React dashboard] --> API[Vert.x gateway]
     API --> PROFILE{Execution profile}
-    PROFILE --> SIM[Simulator\nfixed / router-balanced]
+    PROFILE --> SIM[Simulator\nfixed / router-default / router-advanced]
     PROFILE --> OLLAMA[Ollama local\nollama-fixed]
     PROFILE --> FOUNDRY[Microsoft Foundry\nfixed / router-default / router-advanced]
   end
@@ -35,8 +35,8 @@ event loop. The HTTP surface is versioned under `/api/v1`.
 
 - `simulated` is the default. It makes no network calls and produces seeded,
   repeatable latency, token, retry, outcome, and route-decision data. Its
-  `fixed` and `router-balanced` profiles make the comparison available without
-  credentials; every simulated signal is labelled synthetic.
+  fixed, default-router, and advanced-router profiles make Compare Run
+  available without credentials; every simulated signal is labelled synthetic.
 - `ollama` calls a local OpenAI-compatible `/v1/responses` endpoint. It exposes
   only `ollama-fixed`, requires an explicit local model, and rejects a
   non-loopback base URL by default.
@@ -49,7 +49,8 @@ event loop. The HTTP surface is versioned under `/api/v1`.
 Provider selection and execution-profile selection are separate. The API
 publishes both `models` and `modelProfiles`; a run accepts `modelId` or
 `modelProfile` and rejects unknown or contradictory values. Profile IDs are
-provider-specific: the simulator exposes `fixed` and `router-balanced`, Ollama
+provider-specific: the simulator exposes `fixed`, `router-default`, and
+`router-advanced` (`router-balanced` remains a legacy alias), Ollama
 exposes `ollama-fixed`, and Foundry exposes `fixed`, `router-default`, and/or
 `router-advanced` according to configuration.
 
@@ -69,6 +70,23 @@ Balanced maps to `router-default`, while Cost or Quality maps to
 
 The provider response is ephemeral. It is not published to Kafka or retained by
 the dashboard.
+
+### Compare Run coordinator
+
+A comparison is one logical active execution containing immutable profile
+phases. The coordinator keeps the single-run gate for the entire fixed →
+default → advanced sequence, while each phase emits an ordinary telemetry-v1
+child run. This prevents a normal run from entering between phases and keeps
+existing Kafka/SSE observability intact.
+
+`MAX_CLOUD_REQUESTS_PER_RUN` is the total provider-entry ceiling for a
+comparison, not only its initial request count. Future phases reserve their
+first calls before an earlier phase may retry. Stop prevents new phases and
+retries; already-sent remote requests may still incur usage and their late
+results are ignored. The separate comparison projection retains aggregate
+outcomes, latency, token completeness, safe model-family mix, and fixed deltas;
+it never retains the request prompt, provider output, hashes, trace IDs, or
+cloud locators.
 
 ### Event transport
 

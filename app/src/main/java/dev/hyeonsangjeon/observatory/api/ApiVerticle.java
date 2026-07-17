@@ -1,6 +1,7 @@
 package dev.hyeonsangjeon.observatory.api;
 
 import dev.hyeonsangjeon.observatory.config.AppConfig;
+import dev.hyeonsangjeon.observatory.model.ComparisonRequest;
 import dev.hyeonsangjeon.observatory.model.RunRequest;
 import dev.hyeonsangjeon.observatory.model.Scenario;
 import dev.hyeonsangjeon.observatory.model.Workload;
@@ -77,10 +78,16 @@ public final class ApiVerticle extends AbstractVerticle {
         router.route(HttpMethod.GET, "/api/v1/config").handler(this::configuration);
         router.route(HttpMethod.GET, "/api/v1/snapshot").handler(this::snapshot);
         router.route(HttpMethod.GET, "/api/v1/stream").handler(this::stream);
+        router.route(HttpMethod.GET, "/api/v1/comparisons/:id").handler(this::comparison);
 
         BodyHandler bodyHandler = BodyHandler.create().setBodyLimit(MAX_BODY_BYTES);
         router.route(HttpMethod.POST, "/api/v1/runs").handler(bodyHandler).handler(this::startRun);
         router.route(HttpMethod.POST, "/api/v1/runs/:id/stop").handler(this::stopRun);
+        router.route(HttpMethod.POST, "/api/v1/comparisons")
+                .handler(bodyHandler)
+                .handler(this::startComparison);
+        router.route(HttpMethod.POST, "/api/v1/comparisons/:id/stop")
+                .handler(this::stopComparison);
         router.route(HttpMethod.DELETE, "/api/v1/session").handler(this::resetSession);
 
         router.route("/api/*").handler(context -> error(context, 404, "NOT_FOUND", "API route not found"));
@@ -147,6 +154,7 @@ public final class ApiVerticle extends AbstractVerticle {
                 .put("maxTrafficPerRun", maxTraffic())
                 .put("workloads", Workload.wireNames())
                 .put("scenarios", Scenario.wireNames())
+                .put("comparison", comparisonCapability())
                 .put("defaults", defaults);
         if (transportSelection.fallbackReason() != null) {
             response.put("transportMessage", transportSelection.fallbackReason());
@@ -155,11 +163,21 @@ public final class ApiVerticle extends AbstractVerticle {
     }
 
     private void snapshot(RoutingContext context) {
-        json(context, 200, snapshotSupplier.get());
+        json(context, 200, snapshotPayload());
     }
 
     private void stream(RoutingContext context) {
-        sseHub.register(context.response(), snapshotSupplier.get());
+        sseHub.register(context.response(), snapshotPayload());
+    }
+
+    private void comparison(RoutingContext context) {
+        String comparisonId = context.pathParam("id");
+        JsonObject comparison = comparisonId == null ? null : runner.comparison(comparisonId);
+        if (comparison == null) {
+            error(context, 404, "COMPARISON_NOT_FOUND", "No comparison matches that ID");
+            return;
+        }
+        json(context, 200, comparison);
     }
 
     private void startRun(RoutingContext context) {
@@ -211,10 +229,65 @@ public final class ApiVerticle extends AbstractVerticle {
         json(context, 202, new JsonObject().put("runId", runId).put("status", "stopping"));
     }
 
+    private void startComparison(RoutingContext context) {
+        try {
+            JsonObject body = context.body().asJsonObject();
+            if (body == null) {
+                throw new IllegalArgumentException("JSON request body is required");
+            }
+            if (body.containsKey("modelProfile") || body.containsKey("modelId")) {
+                throw new IllegalArgumentException(
+                        "comparison runs select every available profile and do not accept modelProfile or modelId");
+            }
+            Workload workload = Workload.parse(
+                    body.getString("workload", Workload.CHAT.wireName()));
+            Scenario scenario = Scenario.parse(
+                    body.getString("scenario", Scenario.HEALTHY.wireName()));
+            int traffic = body.getInteger("traffic", defaultComparisonTraffic());
+            String prompt = body.getString("prompt", defaultPrompt(workload));
+            ComparisonRequest request = new ComparisonRequest(
+                    workload, traffic, scenario, prompt);
+            WorkloadRunner.ComparisonStartResult result = runner.startComparison(request);
+            if (!result.accepted()) {
+                if ("profiles_unavailable".equals(result.reason())) {
+                    error(context, 422, "COMPARISON_UNAVAILABLE",
+                            "Comparison requires at least two provider profiles");
+                } else if ("provider_invocation_limit".equals(result.reason())) {
+                    error(context, 422, "COMPARISON_BUDGET_EXCEEDED",
+                            "traffic multiplied by profile count exceeds the provider invocation limit of "
+                                    + runner.providerInvocationLimit());
+                } else {
+                    error(context, 409, "EXECUTION_ALREADY_ACTIVE",
+                            "Only one workload run or comparison can be active");
+                }
+                return;
+            }
+            json(context, 202, result.receipt());
+        } catch (DecodeException exception) {
+            error(context, 422, "INVALID_COMPARISON_REQUEST",
+                    "Request body must be valid JSON");
+        } catch (IllegalArgumentException | ClassCastException exception) {
+            error(context, 422, "INVALID_COMPARISON_REQUEST", exception.getMessage());
+        }
+    }
+
+    private void stopComparison(RoutingContext context) {
+        String comparisonId = context.pathParam("id");
+        if (comparisonId == null || comparisonId.isBlank()
+                || !runner.stopComparison(comparisonId)) {
+            error(context, 404, "COMPARISON_NOT_FOUND",
+                    "No active comparison matches that ID");
+            return;
+        }
+        json(context, 202, new JsonObject()
+                .put("comparisonId", comparisonId)
+                .put("status", "stopped"));
+    }
+
     private void resetSession(RoutingContext context) {
         runner.cancelForReset();
         store.reset();
-        sseHub.publish("snapshot", snapshotSupplier.get());
+        sseHub.publish("snapshot", snapshotPayload());
         context.response().setStatusCode(204).end();
     }
 
@@ -242,6 +315,48 @@ public final class ApiVerticle extends AbstractVerticle {
         return config.aiMode() == AppConfig.AiMode.FOUNDRY
                 ? config.maxCloudRequestsPerRun()
                 : RunRequest.MAX_TRAFFIC;
+    }
+
+    private int defaultComparisonTraffic() {
+        int profileCount = provider.modelProfiles().size();
+        if (profileCount < 1) {
+            return 1;
+        }
+        return Math.max(1, Math.min(4, runner.providerInvocationLimit() / profileCount));
+    }
+
+    private JsonObject comparisonCapability() {
+        JsonArray comparisonProfiles = new JsonArray();
+        provider.modelProfiles().stream()
+                .map(profile -> new JsonObject()
+                        .put("id", profile.id())
+                        .put("label", profile.label())
+                        .put("kind", profile.router() ? "router" : "fixed")
+                        .put("routeStrategy", profile.strategy()))
+                .forEach(comparisonProfiles::add);
+        int profileCount = comparisonProfiles.size();
+        int maxTrafficPerProfile = profileCount == 0
+                ? 0
+                : runner.providerInvocationLimit() / profileCount;
+        boolean available = profileCount >= 2 && maxTrafficPerProfile >= 1;
+        String unavailableReason = profileCount < 2
+                ? "provider_exposes_fewer_than_two_profiles"
+                : maxTrafficPerProfile < 1
+                        ? "provider_invocation_limit_too_low"
+                        : null;
+        return new JsonObject()
+                .put("available", available)
+                .put("unavailableReason", unavailableReason)
+                .put("profiles", comparisonProfiles)
+                .put("profileCount", profileCount)
+                .put("trafficSemantics", "per-profile")
+                .put("defaultTrafficPerProfile", defaultComparisonTraffic())
+                .put("maxTrafficPerProfile", maxTrafficPerProfile)
+                .put("providerInvocationLimit", runner.providerInvocationLimit());
+    }
+
+    private JsonObject snapshotPayload() {
+        return snapshotSupplier.get();
     }
 
     private static String defaultPrompt(Workload workload) {

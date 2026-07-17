@@ -231,16 +231,30 @@ public final class ProjectionStore {
     }
 
     private void finishRun(TelemetryEvent event, String status) {
-        RunProjection run = activeRun != null && activeRun.runId.equals(event.runId())
+        boolean finishesActiveRun = activeRun != null && activeRun.runId.equals(event.runId());
+        RunProjection run = finishesActiveRun
                 ? activeRun
-                : new RunProjection(event.runId(), event.workload(), event.scenario(),
-                        0, status, event.emittedAt(), event.emittedAt(), 0,
+                : new RunProjection(
+                        event.runId(),
+                        event.workload(),
+                        event.scenario(),
+                        0,
+                        status,
+                        event.emittedAt(),
+                        event.emittedAt(),
+                        0,
                         event.details() == null ? null : event.details().modelProfile(),
                         event.details() == null ? null : event.details().routeStrategy());
         run.status = status;
         run.completedAt = event.emittedAt();
-        lastRun = run;
-        activeRun = null;
+        if (lastRun == null
+                || lastRun.completedAt == null
+                || emittedAtMillis(event.emittedAt()) >= emittedAtMillis(lastRun.completedAt)) {
+            lastRun = run;
+        }
+        if (finishesActiveRun) {
+            activeRun = null;
+        }
     }
 
     private static void copyRoutingDetails(

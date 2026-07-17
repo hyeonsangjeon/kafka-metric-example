@@ -1,4 +1,12 @@
 import type {
+  ComparisonConfig,
+  ComparisonInput,
+  ComparisonModelMix,
+  ComparisonPhase,
+  ComparisonProfileOption,
+  ComparisonReceipt,
+  ComparisonState,
+  ComparisonStatus,
   EventLevel,
   HealthState,
   KpiValue,
@@ -28,6 +36,8 @@ export const EMPTY_SNAPSHOT: LabSnapshot = {
   foundryHealth: 'unknown',
   streamRate: null,
   run: null,
+  lastRun: null,
+  comparison: null,
   kpis: [
     { key: 'ai-success', label: 'AI success', value: null, unit: '%', tone: 'good', series: EMPTY_SERIES },
     { key: 'p95-latency', label: 'P95 latency', value: null, unit: 'ms', tone: 'good', series: EMPTY_SERIES },
@@ -116,25 +126,48 @@ function normalizeOption(value: unknown, index: number) {
   }
 }
 
+function normalizeProfileKind(value: unknown, isRouter = false): ComparisonPhase['kind'] | undefined {
+  if (isRouter) return 'router'
+  const normalized = String(value ?? '').toLowerCase()
+  if (['fixed', 'router', 'local'].includes(normalized)) return normalized as ComparisonPhase['kind']
+  if (normalized.includes('router')) return 'router'
+  return normalized ? 'unknown' : undefined
+}
+
 function normalizeModelProfile(value: unknown, index: number): ModelProfileOption {
   const option = normalizeOption(value, index)
   const item = record(value)
-  const rawKind = textValue(item, ['kind', 'type', 'profileKind', 'profile_kind']).toLowerCase()
   const isRouter = first(item, ['router', 'isRouter', 'is_router']) === true
-  const kind: ModelProfileOption['kind'] = isRouter
-    ? 'router'
-    : ['fixed', 'router', 'local'].includes(rawKind)
-    ? rawKind as ModelProfileOption['kind']
-    : rawKind.includes('router')
-      ? 'router'
-      : rawKind
-        ? 'unknown'
-        : undefined
   return {
     ...option,
     strategy: textValue(item, ['strategy', 'routingStrategy', 'routing_strategy', 'profile']) || undefined,
-    kind,
+    kind: normalizeProfileKind(first(item, ['kind', 'type', 'profileKind', 'profile_kind']), isRouter),
     available: first(item, ['available', 'enabled', 'ready']) === false ? false : undefined,
+  }
+}
+
+function normalizeComparisonProfile(value: unknown, index: number): ComparisonProfileOption {
+  const option = normalizeOption(value, index)
+  const item = record(value)
+  const profileId = textValue(item, ['profile', 'profileId', 'profile_id'], option.id)
+  return {
+    ...option,
+    id: profileId,
+    label: textValue(item, ['label', 'displayName', 'display_name', 'name'], option.label || profileId),
+    kind: normalizeProfileKind(first(item, ['kind', 'type']), first(item, ['router', 'isRouter', 'is_router']) === true),
+    routeStrategy: textValue(item, ['routeStrategy', 'route_strategy', 'routingStrategy', 'routing_strategy', 'strategy']) || undefined,
+  }
+}
+
+function normalizeComparisonConfig(input: unknown): ComparisonConfig | undefined {
+  const source = record(input)
+  if (!source) return undefined
+  return {
+    enabled: first(source, ['enabled', 'available']) === true,
+    profiles: array(first(source, ['profiles', 'modelProfiles', 'model_profiles'])).map(normalizeComparisonProfile),
+    maxTrafficPerProfile: numberValue(source, ['maxTrafficPerProfile', 'max_traffic_per_profile']) ?? undefined,
+    providerInvocationLimit: numberValue(source, ['providerInvocationLimit', 'provider_invocation_limit']) ?? undefined,
+    unavailableReason: textValue(source, ['unavailableReason', 'unavailable_reason', 'reason']) || undefined,
   }
 }
 
@@ -149,11 +182,13 @@ export function normalizeConfig(input: unknown): LabConfig {
   const modelProfiles = array(profileInput).map(normalizeModelProfile)
   const mode = textValue(source, ['mode']).toLowerCase()
   const transport = textValue(source, ['transport']).toLowerCase()
+  const comparisonInput = first(source, ['comparison', 'comparisonConfig', 'comparison_config'])
   return {
     mode: mode === 'simulated' || mode === 'ollama' || mode === 'foundry' ? mode : 'unknown',
     transport: transport === 'memory' || transport === 'kafka' ? transport : 'unknown',
     cloudReady: first(source, ['cloudReady', 'cloud_ready']) === true,
     maxTrafficPerRun: numberValue(source, ['maxTrafficPerRun', 'max_traffic_per_run']) ?? undefined,
+    comparison: comparisonInput === undefined ? undefined : normalizeComparisonConfig(comparisonInput),
     workloads: array(first(source, ['workloads', 'workloadOptions', 'workload_options'])).map(normalizeOption),
     scenarios: array(first(source, ['scenarios', 'failureScenarios', 'failure_scenarios'])).map(normalizeOption),
     models: models.length ? models : (modelAlias ? [{ id: modelAlias, label: modelAlias }] : []),
@@ -188,6 +223,125 @@ export function normalizeRun(input: unknown): RunState | null {
     requestRate: numberValue(source, ['requestRate', 'request_rate', 'rps', 'traffic']) ?? undefined,
     modelProfile: textValue(source, ['modelProfile', 'model_profile', 'executionProfile', 'execution_profile', 'modelId', 'model_id']) || undefined,
     modelProfileLabel: textValue(source, ['modelProfileLabel', 'model_profile_label', 'executionProfileLabel', 'execution_profile_label']) || undefined,
+  }
+}
+
+function normalizeComparisonStatus(value: unknown): ComparisonStatus {
+  const normalized = String(value ?? '').toLowerCase()
+  if (['running', 'active'].includes(normalized)) return 'running'
+  if (['completed', 'complete', 'done'].includes(normalized)) return 'completed'
+  if (['failed', 'error'].includes(normalized)) return 'failed'
+  if (['stopped', 'cancelled', 'canceled'].includes(normalized)) return 'stopped'
+  if (['unavailable', 'disabled'].includes(normalized)) return 'unavailable'
+  return 'queued'
+}
+
+function normalizePercentage(value: number | null): number | null {
+  if (value == null) return null
+  return Math.round(value * 1_000) / 1_000
+}
+
+function comparisonProfileId(value: unknown, index: number): string {
+  if (typeof value === 'string' || typeof value === 'number') return String(value)
+  return textValue(record(value), ['profile', 'profileId', 'profile_id', 'id', 'value'], `profile-${index}`)
+}
+
+function normalizeComparisonModel(input: unknown, index: number, totalCount: number): ComparisonModelMix {
+  const source = record(input)
+  const count = numberValue(source, ['count', 'requests', 'uses'], 0) ?? 0
+  const rawPercentage = numberValue(source, ['percentage', 'percent', 'share'])
+  const percentage = normalizePercentage(rawPercentage) ?? (totalCount > 0 ? (count / totalCount) * 100 : 0)
+  return {
+    modelFamily: textValue(source, ['modelFamily', 'model_family', 'family', 'model', 'label', 'name'], `model-${index}`),
+    count,
+    percentage: Math.round(Math.max(0, Math.min(100, percentage)) * 1_000) / 1_000,
+  }
+}
+
+function normalizeComparisonPhase(input: unknown, index: number, previous?: ComparisonPhase): ComparisonPhase {
+  const source = record(input)
+  const profile = textValue(source, ['profile', 'profileId', 'profile_id', 'id'], previous?.profile ?? `profile-${index}`)
+  const modelInput = first(source, ['models', 'modelMix', 'model_mix'])
+  const modelValues = modelInput === undefined ? undefined : array(modelInput)
+  const modelTotal = modelValues?.reduce<number>(
+    (sum, model) => sum + (numberValue(record(model), ['count', 'requests', 'uses'], 0) ?? 0),
+    0,
+  ) ?? 0
+  const models = modelValues === undefined
+    ? previous?.models ?? []
+    : modelValues.map((model, modelIndex) => normalizeComparisonModel(model, modelIndex, modelTotal))
+  const kind = normalizeProfileKind(first(source, ['kind', 'type']), profile.toLowerCase().includes('router'))
+  return {
+    profile,
+    label: textValue(source, ['label', 'displayName', 'display_name', 'name'], previous?.label ?? profile),
+    kind: kind ?? previous?.kind ?? 'unknown',
+    routeStrategy: textValue(source, ['routeStrategy', 'route_strategy', 'routingStrategy', 'routing_strategy', 'strategy'], previous?.routeStrategy ?? '') || undefined,
+    status: normalizeComparisonStatus(first(source, ['status', 'state']) ?? previous?.status),
+    runId: textValue(source, ['runId', 'run_id'], previous?.runId ?? '') || undefined,
+    requested: numberValue(source, ['requested', 'requests'], previous?.requested ?? 0) ?? 0,
+    completed: numberValue(source, ['completed', 'succeeded'], previous?.completed ?? 0) ?? 0,
+    failed: numberValue(source, ['failed', 'failures'], previous?.failed ?? 0) ?? 0,
+    retries: numberValue(source, ['retries', 'retryCount', 'retry_count'], previous?.retries ?? 0) ?? 0,
+    successRate: normalizePercentage(numberValue(source, ['successRate', 'success_rate'], previous?.successRate ?? null)),
+    p50LatencyMs: numberValue(source, ['p50LatencyMs', 'p50_latency_ms'], previous?.p50LatencyMs ?? null),
+    p95LatencyMs: numberValue(source, ['p95LatencyMs', 'p95_latency_ms'], previous?.p95LatencyMs ?? null),
+    inputTokens: numberValue(source, ['inputTokens', 'input_tokens'], previous?.inputTokens ?? 0) ?? 0,
+    outputTokens: numberValue(source, ['outputTokens', 'output_tokens'], previous?.outputTokens ?? 0) ?? 0,
+    tokenSamples: numberValue(source, ['tokenSamples', 'token_samples'], previous?.tokenSamples ?? 0) ?? 0,
+    models,
+    p95DeltaMs: numberValue(source, ['p95DeltaMs', 'p95_delta_ms'], previous?.p95DeltaMs ?? null),
+    p95DeltaPercent: numberValue(source, ['p95DeltaPercent', 'p95_delta_percent'], previous?.p95DeltaPercent ?? null),
+    totalTokensDelta: numberValue(source, ['totalTokensDelta', 'total_tokens_delta'], previous?.totalTokensDelta ?? null),
+    totalTokensDeltaPercent: numberValue(source, ['totalTokensDeltaPercent', 'total_tokens_delta_percent'], previous?.totalTokensDeltaPercent ?? null),
+  }
+}
+
+export function normalizeComparison(input: unknown, previous: ComparisonState | null = null): ComparisonState | null {
+  if (input === null) return null
+  const outer = record(input)
+  const source = record(first(outer, ['comparison', 'data'])) ?? outer
+  if (!source) return previous
+  const profileInput = first(source, ['profiles', 'modelProfiles', 'model_profiles'])
+  const profiles = profileInput === undefined
+    ? previous?.profiles ?? []
+    : array(profileInput).map(comparisonProfileId)
+  const phaseInput = first(source, ['phases', 'results'])
+  const status = normalizeComparisonStatus(first(source, ['status', 'state']) ?? previous?.status)
+  const phases = phaseInput === undefined
+    ? previous?.phases ?? []
+    : array(phaseInput).map((phase, index) => {
+      const profile = comparisonProfileId(phase, index)
+      return normalizeComparisonPhase(phase, index, previous?.phases.find((item) => item.profile === profile))
+    })
+  return {
+    comparisonId: textValue(source, ['comparisonId', 'comparison_id', 'id'], previous?.comparisonId ?? ''),
+    status,
+    workload: textValue(source, ['workload'], previous?.workload ?? ''),
+    scenario: textValue(source, ['scenario'], previous?.scenario ?? '') || undefined,
+    trafficPerProfile: numberValue(source, ['trafficPerProfile', 'traffic_per_profile', 'traffic'], previous?.trafficPerProfile ?? 0) ?? 0,
+    profiles,
+    currentProfile: status === 'running'
+      ? textValue(source, ['currentProfile', 'current_profile'], previous?.currentProfile ?? '') || undefined
+      : undefined,
+    plannedRequests: numberValue(source, ['plannedRequests', 'planned_requests'], previous?.plannedRequests ?? 0) ?? 0,
+    providerInvocations: numberValue(source, ['providerInvocations', 'provider_invocations'], previous?.providerInvocations ?? 0) ?? 0,
+    providerInvocationLimit: numberValue(source, ['providerInvocationLimit', 'provider_invocation_limit'], previous?.providerInvocationLimit ?? 0) ?? 0,
+    startedAt: textValue(source, ['startedAt', 'started_at'], previous?.startedAt ?? '') || undefined,
+    completedAt: textValue(source, ['completedAt', 'completed_at'], previous?.completedAt ?? '') || undefined,
+    phases,
+  }
+}
+
+export function normalizeComparisonReceipt(input: unknown): ComparisonReceipt {
+  const source = record(first(record(input), ['receipt', 'data'])) ?? record(input)
+  const profileInput = first(source, ['profiles', 'modelProfiles', 'model_profiles'])
+  return {
+    comparisonId: textValue(source, ['comparisonId', 'comparison_id', 'id']),
+    status: normalizeComparisonStatus(first(source, ['status', 'state'])),
+    profiles: array(profileInput).map(comparisonProfileId),
+    trafficPerProfile: numberValue(source, ['trafficPerProfile', 'traffic_per_profile', 'traffic']) ?? undefined,
+    plannedRequests: numberValue(source, ['plannedRequests', 'planned_requests']) ?? undefined,
+    providerInvocationLimit: numberValue(source, ['providerInvocationLimit', 'provider_invocation_limit']) ?? undefined,
   }
 }
 
@@ -458,6 +612,17 @@ export function normalizeSnapshot(input: unknown, previous: LabSnapshot = EMPTY_
     : Object.prototype.hasOwnProperty.call(root, 'active_run')
       ? root.active_run
       : root.run
+  const hasLastRun = Object.prototype.hasOwnProperty.call(root, 'lastRun')
+    || Object.prototype.hasOwnProperty.call(root, 'last_run')
+  const lastRunValue = Object.prototype.hasOwnProperty.call(root, 'lastRun') ? root.lastRun : root.last_run
+  const hasComparison = Object.prototype.hasOwnProperty.call(root, 'comparison')
+    || Object.prototype.hasOwnProperty.call(root, 'activeComparison')
+    || Object.prototype.hasOwnProperty.call(root, 'active_comparison')
+  const comparisonValue = Object.prototype.hasOwnProperty.call(root, 'comparison')
+    ? root.comparison
+    : Object.prototype.hasOwnProperty.call(root, 'activeComparison')
+      ? root.activeComparison
+      : root.active_comparison
   const kafkaHealthValue = first(health, ['kafka']) ?? first(root, ['kafkaHealth', 'kafka_health'])
   const foundryHealthValue = first(health, ['foundry', 'aiFoundry', 'ai_foundry'])
     ?? first(root, ['foundryHealth', 'foundry_health'])
@@ -475,6 +640,8 @@ export function normalizeSnapshot(input: unknown, previous: LabSnapshot = EMPTY_
       ?? numberValue(telemetry, ['rate', 'streamRate', 'stream_rate'])
       ?? numberValue(record(metrics), ['eventsPerSecond', 'events_per_second'], previous.streamRate),
     run: hasActiveRun ? normalizeRun(runValue) : previous.run,
+    lastRun: hasLastRun ? normalizeRun(lastRunValue) : previous.lastRun,
+    comparison: hasComparison ? normalizeComparison(comparisonValue, previous.comparison) : previous.comparison,
     kpis: metricsWithFreshness !== undefined ? normalizeKpis(metricsWithFreshness, previous.kpis) : previous.kpis,
     partitions: partitionInput !== undefined ? array(partitionInput).map(normalizePartition) : previous.partitions,
     events: eventInput !== undefined ? array(eventInput).map(normalizeEvent) : previous.events,
@@ -482,6 +649,33 @@ export function normalizeSnapshot(input: unknown, previous: LabSnapshot = EMPTY_
     system: systemInput !== undefined ? array(systemInput).map(normalizeNode) : previous.system,
     routing: routingInput !== undefined ? normalizeRouting(routingInput) : previous.routing,
   }
+}
+
+const TERMINAL_COMPARISON_STATES = new Set<ComparisonStatus>(['completed', 'failed', 'stopped', 'unavailable'])
+
+export function preferNewerSnapshot(current: LabSnapshot, candidate: LabSnapshot): LabSnapshot {
+  const sameSession = !current.sessionId || !candidate.sessionId || current.sessionId === candidate.sessionId
+  const currentCapturedAt = current.capturedAt ? Date.parse(current.capturedAt) : Number.NaN
+  const candidateCapturedAt = candidate.capturedAt ? Date.parse(candidate.capturedAt) : Number.NaN
+  if (sameSession
+    && Number.isFinite(currentCapturedAt)
+    && Number.isFinite(candidateCapturedAt)
+    && candidateCapturedAt < currentCapturedAt) {
+    return current
+  }
+
+  const currentComparison = current.comparison
+  const candidateComparison = candidate.comparison
+  if (sameSession
+    && currentComparison
+    && candidateComparison
+    && currentComparison.comparisonId === candidateComparison.comparisonId
+    && (TERMINAL_COMPARISON_STATES.has(currentComparison.status)
+      && !TERMINAL_COMPARISON_STATES.has(candidateComparison.status)
+      || currentComparison.providerInvocations > candidateComparison.providerInvocations)) {
+    return { ...candidate, comparison: currentComparison }
+  }
+  return candidate
 }
 
 function cap<T>(items: T[], maximum: number): T[] {
@@ -509,6 +703,7 @@ export function reduceStreamMessage(previous: LabSnapshot, input: unknown, event
     const trace = normalizeTrace(payload)
     return { ...previous, traces: cap([trace, ...previous.traces.filter((item) => item.id !== trace.id)], 100) }
   }
+  if (type.includes('comparison')) return { ...previous, comparison: normalizeComparison(payload, previous.comparison) }
   if (type.includes('routing')) return { ...previous, routing: normalizeRouting(payload) }
   if (type.includes('event')) {
     const event = normalizeEvent(payload)
@@ -572,6 +767,35 @@ export async function createRun(input: RunInput): Promise<unknown> {
   })
 }
 
+export async function startComparison(input: ComparisonInput): Promise<ComparisonReceipt> {
+  const receipt = normalizeComparisonReceipt(await jsonRequest('/api/v1/comparisons', {
+    method: 'POST',
+    body: JSON.stringify({
+      workload: input.workload,
+      scenario: input.scenario,
+      traffic: input.traffic,
+      ...(input.prompt ? { prompt: input.prompt } : {}),
+    }),
+  }))
+  if (!receipt.comparisonId) throw new ApiError('The comparison receipt did not include a comparisonId.')
+  return receipt
+}
+
+export async function stopComparison(comparisonId: string): Promise<ComparisonReceipt> {
+  const receipt = normalizeComparisonReceipt(await jsonRequest(
+    `/api/v1/comparisons/${encodeURIComponent(comparisonId)}/stop`,
+    { method: 'POST' },
+  ))
+  if (!receipt.comparisonId) throw new ApiError('The comparison stop receipt did not include a comparisonId.')
+  return receipt
+}
+
+export async function getComparison(comparisonId: string): Promise<ComparisonState> {
+  const comparison = normalizeComparison(await jsonRequest(`/api/v1/comparisons/${encodeURIComponent(comparisonId)}`))
+  if (!comparison?.comparisonId) throw new ApiError('The comparison response was incomplete.')
+  return comparison
+}
+
 export async function stopRun(runId: string): Promise<unknown> {
   return jsonRequest(`/api/v1/runs/${encodeURIComponent(runId)}/stop`, { method: 'POST' })
 }
@@ -596,7 +820,7 @@ export function subscribeToStream(options: {
     }
   }
   stream.onmessage = handler
-  const namedEvents = ['snapshot', 'metrics', 'metric', 'partition', 'telemetry', 'event', 'trace', 'routing', 'run']
+  const namedEvents = ['snapshot', 'metrics', 'metric', 'partition', 'telemetry', 'event', 'trace', 'routing', 'run', 'comparison']
   for (const name of namedEvents) stream.addEventListener(name, handler as EventListener)
   return () => {
     for (const name of namedEvents) stream.removeEventListener(name, handler as EventListener)

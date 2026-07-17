@@ -181,6 +181,86 @@ class ProjectionStoreTest {
         assertTrue(routing.getJsonArray("routes").isEmpty());
     }
 
+    @Test
+    void lateTerminalCannotClearANewerActiveRunOrReplaceANewerLastRun() {
+        ProjectionStore store = new ProjectionStore();
+        TelemetryEvent newStarted = TelemetryEvent.create(
+                EventType.RUN_STARTED,
+                store.sessionId(),
+                "run-new",
+                null,
+                "simulated",
+                Workload.CHAT,
+                Scenario.HEALTHY,
+                0,
+                null,
+                TelemetryEvent.EventDetails.run(1, true, "fixed", "fixed"));
+        TelemetryEvent staleTerminal = withEmittedAt(TelemetryEvent.create(
+                EventType.RUN_COMPLETED,
+                store.sessionId(),
+                "run-old",
+                null,
+                "simulated",
+                Workload.CHAT,
+                Scenario.HEALTHY,
+                0,
+                null,
+                TelemetryEvent.EventDetails.empty(true, "fixed", "fixed")),
+                "2020-01-01T00:00:00Z");
+
+        store.accept(new EventDelivery(newStarted, 0, 0, 0));
+        store.accept(new EventDelivery(staleTerminal, 1, 0, 0));
+
+        assertEquals("run-new", store.snapshot().getJsonObject("activeRun").getString("runId"));
+
+        TelemetryEvent newTerminal = TelemetryEvent.create(
+                EventType.RUN_COMPLETED,
+                store.sessionId(),
+                "run-new",
+                null,
+                "simulated",
+                Workload.CHAT,
+                Scenario.HEALTHY,
+                1,
+                null,
+                TelemetryEvent.EventDetails.empty(true, "fixed", "fixed"));
+        store.accept(new EventDelivery(newTerminal, 0, 1, 0));
+        assertEquals("run-new", store.snapshot().getJsonObject("lastRun").getString("runId"));
+
+        TelemetryEvent evenOlderTerminal = withEmittedAt(TelemetryEvent.create(
+                EventType.RUN_COMPLETED,
+                store.sessionId(),
+                "run-even-older",
+                null,
+                "simulated",
+                Workload.CHAT,
+                Scenario.HEALTHY,
+                0,
+                null,
+                TelemetryEvent.EventDetails.empty(true, "fixed", "fixed")),
+                "2019-01-01T00:00:00Z");
+        store.accept(new EventDelivery(evenOlderTerminal, 2, 0, 0));
+
+        assertEquals("run-new", store.snapshot().getJsonObject("lastRun").getString("runId"));
+    }
+
+    private static TelemetryEvent withEmittedAt(TelemetryEvent event, String emittedAt) {
+        return new TelemetryEvent(
+                event.schemaVersion(),
+                event.eventId(),
+                event.eventType(),
+                event.sessionId(),
+                event.runId(),
+                event.traceId(),
+                emittedAt,
+                event.providerAlias(),
+                event.workload(),
+                event.scenario(),
+                event.sequence(),
+                event.partitionHint(),
+                event.details());
+    }
+
     private static TelemetryEvent event(
             ProjectionStore store,
             EventType type,
