@@ -56,9 +56,9 @@ Stable releases are published for both `linux/amd64` and `linux/arm64` with an
 SBOM and provenance attestation:
 
 ```bash
-docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.0
+docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.1
 docker run --rm -p 127.0.0.1:8080:8080 \
-  ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.0
+  ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.1
 ```
 
 The standalone image uses the deterministic simulator and in-memory telemetry
