@@ -55,7 +55,7 @@ jobs:
       - name: Validate infrastructure sources
         shell: bash
         run: |
-          bash -n infra/*.sh
+          bash -n infra/*.sh tools/evidence/*.sh
           jq empty infra/main.json tools/eval/profiles.json tools/eval/toolkit.lock.json
           docker compose config --quiet
 
@@ -70,6 +70,38 @@ jobs:
         with:
           context: .
           push: false
+          load: true
           tags: foundry-stream-lab:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test health and Compare Run
+        shell: bash
+        run: |
+          docker run -d --name foundry-stream-lab-ci \
+            -p 127.0.0.1:18080:8080 \
+            -e AI_PROVIDER=simulated \
+            -e EVENT_TRANSPORT=memory \
+            foundry-stream-lab:ci
+          trap 'docker rm -f foundry-stream-lab-ci >/dev/null 2>&1 || true' EXIT
+          for _ in {1..30}; do
+            curl -fsS http://127.0.0.1:18080/api/v1/health | jq -e '.ready == true' >/dev/null && break
+            sleep 1
+          done
+          receipt=$(curl -fsS \
+            -H 'Content-Type: application/json' \
+            --data '{"workload":"chat","scenario":"healthy","traffic":1}' \
+            http://127.0.0.1:18080/api/v1/comparisons)
+          comparison_id=$(jq -r '.comparisonId' <<<"$receipt")
+          result='{}'
+          for _ in {1..30}; do
+            result=$(curl -fsS "http://127.0.0.1:18080/api/v1/comparisons/$comparison_id")
+            [[ $(jq -r '.status' <<<"$result") == completed ]] && break
+            sleep 1
+          done
+          jq -e '
+            .status == "completed"
+            and .providerInvocations == 3
+            and (.phases | map(.profile)) == ["fixed", "router-default", "router-advanced"]
+            and all(.phases[]; .completed == 1 and .failed == 0)
+          ' <<<"$result"

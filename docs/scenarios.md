@@ -4,16 +4,17 @@ All scenarios are deterministic in simulated mode and apply to one run only.
 
 ## Fixed vs router comparison
 
-This is the primary demo. Change only the execution profile so the request and
-telemetry paths remain comparable.
+This is the primary demo. Compare Run replays one unchanged input across all
+three profiles while keeping the telemetry paths comparable.
 
 ### Credential-free rehearsal
 
 1. Start the default simulator and choose the **Chat** workload, **Healthy**
-   scenario, traffic `20`, and one short prompt.
-2. Select `fixed`, run it, and note completed/failed outcomes, p95 latency,
-   token counts, and the `fixed` selected route.
-3. Keep every input unchanged, select `router-balanced`, and run again.
+   scenario, traffic within the displayed per-profile limit, and one short prompt.
+2. Select **Compare profiles**. The gateway runs `fixed`, `router-default`, and
+   `router-advanced` strictly sequentially with the same input.
+3. Compare completed/failed outcomes, p95 latency, token totals, and model mix
+   against the fixed baseline.
 4. Inspect the routing panel and trace drawer. The simulator should show a
    deterministic mix of `fast`, `general`, and `reasoning` safe route labels.
 5. State explicitly that these routing decisions are synthetic. They rehearse
@@ -26,9 +27,11 @@ telemetry paths remain comparable.
    configure the separate advanced deployment for Cost or Quality and, if
    useful, a restricted model set.
 2. Set `FOUNDRY_ROUTER_ADVANCED_PROFILE` to matching `cost` or `quality`
-   metadata and keep traffic within `MAX_CLOUD_REQUESTS_PER_RUN`.
-3. Run `fixed`, `router-default`, and `router-advanced`, using the same
-   workload, scenario, traffic, and prompt for every run.
+   metadata. Choose traffic per profile so three initial calls plus any retry
+   remain within `MAX_CLOUD_REQUESTS_PER_RUN`.
+3. Select **Compare profiles** once. The gateway freezes the profile set and
+   runs `fixed`, `router-default`, and `router-advanced` sequentially with the
+   same workload, scenario, traffic, and prompt.
 4. Compare outcomes, p95 latency, attempts, token counts, and the distribution
    of privacy-safe model-family labels across the fixed baseline, default
    behavior, and advanced policy. Do not interpret the short sample as a
@@ -73,8 +76,8 @@ share of records while requests continue to complete normally.
 
 After the fixed/router comparison:
 
-1. Keep the selected router profile (`router-balanced` in the simulator,
-   `router-default` or `router-advanced` in Foundry) and run **Consumer
+1. After Compare Run completes, select `router-default` or `router-advanced`
+   for a single run and apply **Consumer
    slowdown**. Watch lag and freshness rise independently of provider latency.
 2. Run **Duplicate delivery** and confirm completed requests do not increase
    twice.

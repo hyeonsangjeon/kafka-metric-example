@@ -9,10 +9,11 @@ It keeps the useful idea—`event -> Kafka -> projection -> live dashboard`—an
 replaces the 2019-era runtime and vendored admin theme with a focused Microsoft
 Foundry routing, evaluation, and observability lab.
 
-![Live Advanced Cost routing result](docs/evidence/2026-07-16-foundry-live/screenshots/live-foundry-advanced-cost-desktop.jpg)
+![Completed three-profile Compare Run in the deterministic simulator](docs/design/compare-run-simulator-desktop.jpg)
 
-The disposable 2026-07-16 Foundry environment was captured before cleanup.
-Start with the [live evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md),
+The screen above is the credential-free simulator path. A disposable 2026-07-16
+Foundry environment was also captured before cleanup. Start with the
+[live evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md),
 follow [the presenter runbook](docs/demo-runbook.md), or inspect the
 [HTTP input/output examples](docs/api-examples.md). The bundle includes actual
 fixed/default/advanced screenshots, sanitized routing and token telemetry,
@@ -30,11 +31,16 @@ makes the boundary visible:
 - duplicate delivery increases raw records without double-counting outcomes;
 - a hot partition creates skew without inventing request failures.
 
-The default simulator is deterministic, credential-free, and includes both
-`fixed` and `router-balanced` profiles. Ollama provides a local fixed-model
+The default simulator is deterministic, credential-free, and includes
+`fixed`, `router-default`, and `router-advanced` profiles. Ollama provides a local fixed-model
 path. Microsoft Foundry adds a real fixed deployment, a default Balanced router,
 and a separately configured advanced router through the Responses API and
 `DefaultAzureCredential`.
+
+**Compare profiles** replays one unchanged input across the available profiles
+as a single sequential, bounded execution. It reports outcomes, p50/p95,
+retries, tokens, model mix, and fixed-baseline deltas without retaining prompt
+or response bodies. See [the Compare Run manual](docs/comparison.md).
 
 ## Quick start
 
@@ -56,9 +62,9 @@ Stable releases are published for both `linux/amd64` and `linux/arm64` with an
 SBOM and provenance attestation:
 
 ```bash
-docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.1
+docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.2.0
 docker run --rm -p 127.0.0.1:8080:8080 \
-  ghcr.io/hyeonsangjeon/kafka-metric-example:1.1.1
+  ghcr.io/hyeonsangjeon/kafka-metric-example:1.2.0
 ```
 
 The standalone image uses the deterministic simulator and in-memory telemetry
@@ -66,12 +72,12 @@ transport by default. Use the Compose quick start for the complete Kafka path.
 
 ### Suggested demo
 
-1. Keep the same workload, traffic, prompt, and **Healthy** scenario.
-2. Run the `fixed` profile and note p95 latency, outcomes, and selected route.
-3. In simulator mode, run `router-balanced`; its decision is deterministic and
-   explicitly synthetic.
-4. In Foundry mode, compare `router-default` with `router-advanced` on unchanged
-   inputs. Their routing modes are properties of separate Azure deployments.
+1. Keep the workload, prompt, and **Healthy** scenario unchanged.
+2. Set traffic per profile within the server-provided comparison limit.
+3. Select **Compare profiles** to run Fixed → Default → Advanced sequentially.
+4. Review p95 latency, outcomes, retries, token totals, and model mix against
+   the fixed baseline. Simulator routing is explicitly synthetic; Foundry
+   routing modes belong to separate Azure deployments.
 5. Add **Consumer slowdown** to separate Kafka lag from model latency, then add
    **Model throttling** to inspect the bounded retry in trace details.
 
@@ -83,7 +89,7 @@ See [the scenario guide](docs/scenarios.md) for a presenter-ready script.
 flowchart LR
   UI[React dashboard] --> API[Vert.x gateway]
   API --> PROFILE{Execution profile}
-  PROFILE --> SIM[Simulator\nfixed or router-balanced]
+  PROFILE --> SIM[Simulator\nfixed, default, or advanced]
   PROFILE --> OLLAMA[Ollama local\nollama-fixed]
   PROFILE --> FOUNDRY[Microsoft Foundry\nfixed, default router, or advanced router]
   API --> EVENTS[Versioned telemetry]
@@ -102,7 +108,7 @@ component and failure boundaries.
 
 | Provider | Credentials | Available profiles | Network boundary |
 | --- | --- | --- | --- |
-| `simulated` (default) | None | `fixed`, `router-balanced` | No provider network call |
+| `simulated` (default) | None | `fixed`, `router-default`, `router-advanced` | No provider network call |
 | `ollama` | None | `ollama-fixed` | Loopback OpenAI-compatible `/v1/responses` |
 | `foundry` | Microsoft Entra | `fixed`, `router-default`, `router-advanced` when configured | Foundry project endpoint |
 
@@ -141,8 +147,8 @@ npm run dev
 ```
 
 The Ollama adapter uses the official OpenAI-compatible `/v1/responses`
-surface. It is a fixed-model path; `router-balanced` is not offered in Ollama
-mode.
+surface. It is a fixed-model path; Compare Run is unavailable rather than
+inventing router results.
 
 ### Microsoft Foundry fixed vs Model Router
 
@@ -246,6 +252,9 @@ Dockerfile           Reproducible multi-stage production image
 | `GET` | `/api/v1/stream` | One-way Server-Sent Events stream |
 | `POST` | `/api/v1/runs` | Start one bounded workload |
 | `POST` | `/api/v1/runs/{id}/stop` | Stop the active workload |
+| `POST` | `/api/v1/comparisons` | Start one bounded sequential profile comparison |
+| `GET` | `/api/v1/comparisons/{id}` | Fetch the privacy-safe comparison export |
+| `POST` | `/api/v1/comparisons/{id}/stop` | Stop remaining phases and retries |
 | `DELETE` | `/api/v1/session` | Clear ephemeral session state |
 
 ## Scope

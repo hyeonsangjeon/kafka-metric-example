@@ -9,6 +9,15 @@ const config: LabConfig = {
   transport: 'memory',
   cloudReady: false,
   maxTrafficPerRun: 20,
+  comparison: {
+    enabled: true,
+    profiles: [
+      { id: 'fixed', label: 'Fixed deployment', kind: 'fixed' },
+      { id: 'router-balanced', label: 'Model Router · Balanced', kind: 'router', routeStrategy: 'balanced' },
+    ],
+    maxTrafficPerProfile: 5,
+    providerInvocationLimit: 12,
+  },
   workloads: [{ id: 'chat', label: 'Chat' }],
   scenarios: [{ id: 'healthy', label: 'Healthy' }],
   models: [
@@ -31,10 +40,13 @@ describe('model routing UI', () => {
       <RunConsole
         config={config}
         run={null}
+        comparison={null}
         connection="connected"
         pending={null}
         onStart={onStart}
         onStop={vi.fn().mockResolvedValue(undefined)}
+        onCompare={vi.fn().mockResolvedValue(undefined)}
+        onStopComparison={vi.fn().mockResolvedValue(undefined)}
       />,
     )
 
@@ -45,6 +57,69 @@ describe('model routing UI', () => {
       modelProfile: 'router-balanced',
       modelId: 'router-balanced',
     })))
+  })
+
+  it('starts one bounded comparison with the same console input', async () => {
+    const onCompare = vi.fn().mockResolvedValue(undefined)
+    render(
+      <RunConsole
+        config={config}
+        run={null}
+        comparison={null}
+        connection="connected"
+        pending={null}
+        onStart={vi.fn().mockResolvedValue(undefined)}
+        onStop={vi.fn().mockResolvedValue(undefined)}
+        onCompare={onCompare}
+        onStopComparison={vi.fn().mockResolvedValue(undefined)}
+      />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText(/safe default/i), { target: { value: 'Compare this exact prompt.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Compare profiles' }))
+
+    await waitFor(() => expect(onCompare).toHaveBeenCalledTimes(1))
+    expect(onCompare).toHaveBeenCalledWith({
+      workload: 'chat',
+      scenario: 'healthy',
+      traffic: 5,
+      prompt: 'Compare this exact prompt.',
+    })
+  })
+
+  it('keeps Stop comparison available while its child run is active', async () => {
+    const onStopComparison = vi.fn().mockResolvedValue(undefined)
+    render(
+      <RunConsole
+        config={config}
+        run={{ id: 'run-child', status: 'running' }}
+        comparison={{
+          comparisonId: 'comparison-1',
+          status: 'running',
+          workload: 'chat',
+          trafficPerProfile: 5,
+          profiles: ['fixed', 'router-balanced'],
+          currentProfile: 'fixed',
+          plannedRequests: 10,
+          providerInvocations: 2,
+          providerInvocationLimit: 12,
+          phases: [],
+        }}
+        connection="connected"
+        pending={null}
+        onStart={vi.fn().mockResolvedValue(undefined)}
+        onStop={vi.fn().mockResolvedValue(undefined)}
+        onCompare={vi.fn().mockResolvedValue(undefined)}
+        onStopComparison={onStopComparison}
+      />,
+    )
+
+    const stopComparison = screen.getByRole('button', { name: 'Stop comparison' })
+    expect(stopComparison).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Run workload' })).toBeDisabled()
+    fireEvent.click(stopComparison)
+
+    await waitFor(() => expect(onStopComparison).toHaveBeenCalledTimes(1))
   })
 
   it('renders route mix performance and the empty state', () => {

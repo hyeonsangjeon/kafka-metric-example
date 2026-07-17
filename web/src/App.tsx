@@ -20,6 +20,11 @@ export default function App() {
   const selectTraceById = useCallback((traceId: string) => setSelectedTraceId(traceId), [])
   const selectTrace = useCallback((trace: TraceSummary) => setSelectedTraceId(trace.id), [])
   const closeTrace = useCallback(() => setSelectedTraceId(null), [])
+  const runActive = lab.snapshot.run?.status === 'starting'
+    || lab.snapshot.run?.status === 'running'
+    || lab.snapshot.run?.status === 'stopping'
+  const comparisonActive = lab.snapshot.comparison?.status === 'queued'
+    || lab.snapshot.comparison?.status === 'running'
 
   return (
     <>
@@ -34,6 +39,7 @@ export default function App() {
       onToggleStream={lab.toggleStream}
       onReset={() => void lab.reset().catch(() => undefined)}
       resetPending={lab.pendingAction === 'reset'}
+      resetDisabled={lab.pendingAction !== null || runActive || comparisonActive}
       mobileMenuOpen={mobileMenuOpen}
       onMobileMenuChange={setMobileMenuOpen}
       providerMode={lab.config.mode}
@@ -48,6 +54,9 @@ export default function App() {
           streamPaused={lab.streamPaused}
           onStart={lab.start}
           onStop={lab.stop}
+          onCompare={lab.compare}
+          onStopComparison={lab.stopComparison}
+          onExportComparison={lab.loadComparison}
           onToggleStream={lab.toggleStream}
           onClearEvents={lab.clearEvents}
           onTraceSelect={selectTraceById}

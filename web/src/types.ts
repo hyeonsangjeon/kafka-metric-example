@@ -2,6 +2,7 @@ export type ConnectionState = 'connecting' | 'connected' | 'disconnected'
 export type HealthState = 'healthy' | 'degraded' | 'offline' | 'unknown'
 export type EventLevel = 'success' | 'warning' | 'error' | 'info'
 export type RunStatus = 'idle' | 'starting' | 'running' | 'stopping' | 'completed' | 'failed'
+export type ComparisonStatus = 'queued' | 'running' | 'completed' | 'failed' | 'stopped' | 'unavailable'
 
 export interface SelectOption {
   id: string
@@ -15,11 +16,25 @@ export interface ModelProfileOption extends SelectOption {
   available?: boolean
 }
 
+export interface ComparisonProfileOption extends SelectOption {
+  kind?: 'fixed' | 'router' | 'local' | 'unknown'
+  routeStrategy?: string
+}
+
+export interface ComparisonConfig {
+  enabled: boolean
+  profiles: ComparisonProfileOption[]
+  maxTrafficPerProfile?: number
+  providerInvocationLimit?: number
+  unavailableReason?: string
+}
+
 export interface LabConfig {
   mode: 'simulated' | 'ollama' | 'foundry' | 'unknown'
   transport: 'memory' | 'kafka' | 'unknown'
   cloudReady: boolean
   maxTrafficPerRun?: number
+  comparison?: ComparisonConfig
   workloads: SelectOption[]
   scenarios: SelectOption[]
   models: SelectOption[]
@@ -45,6 +60,61 @@ export interface RunState {
   requestRate?: number
   modelProfile?: string
   modelProfileLabel?: string
+}
+
+export interface ComparisonModelMix {
+  modelFamily: string
+  count: number
+  percentage: number
+}
+
+export interface ComparisonPhase {
+  profile: string
+  label: string
+  kind: 'fixed' | 'router' | 'local' | 'unknown'
+  routeStrategy?: string
+  status: ComparisonStatus
+  runId?: string
+  requested: number
+  completed: number
+  failed: number
+  retries: number
+  successRate: number | null
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+  inputTokens: number
+  outputTokens: number
+  tokenSamples: number
+  models: ComparisonModelMix[]
+  p95DeltaMs: number | null
+  p95DeltaPercent: number | null
+  totalTokensDelta: number | null
+  totalTokensDeltaPercent: number | null
+}
+
+export interface ComparisonState {
+  comparisonId: string
+  status: ComparisonStatus
+  workload: string
+  scenario?: string
+  trafficPerProfile: number
+  profiles: string[]
+  currentProfile?: string
+  plannedRequests: number
+  providerInvocations: number
+  providerInvocationLimit: number
+  startedAt?: string
+  completedAt?: string
+  phases: ComparisonPhase[]
+}
+
+export interface ComparisonReceipt {
+  comparisonId: string
+  status: ComparisonStatus
+  profiles: string[]
+  trafficPerProfile?: number
+  plannedRequests?: number
+  providerInvocationLimit?: number
 }
 
 export interface KpiValue {
@@ -149,6 +219,8 @@ export interface LabSnapshot {
   foundryHealth: HealthState
   streamRate: number | null
   run: RunState | null
+  lastRun: RunState | null
+  comparison: ComparisonState | null
   kpis: KpiValue[]
   partitions: PartitionTelemetry[]
   events: LabEvent[]
@@ -164,6 +236,13 @@ export interface RunInput {
   modelProfile?: string
   durationSeconds?: number
   requestRate?: number
+  prompt?: string
+}
+
+export interface ComparisonInput {
+  workload: string
+  scenario?: string
+  traffic: number
   prompt?: string
 }
 

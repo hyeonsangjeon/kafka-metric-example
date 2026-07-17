@@ -15,10 +15,16 @@ public final class SimulatedProvider implements AiProvider {
                     "Every request uses the same simulated model.",
                     false),
             new ModelProfile(
-                    "router-balanced",
-                    "Model Router · Balanced",
+                    "router-default",
+                    "Model Router · Default",
                     "balanced",
                     "Workload shape deterministically selects Fast, General, or Reasoning.",
+                    true),
+            new ModelProfile(
+                    "router-advanced",
+                    "Model Router · Advanced",
+                    "cost",
+                    "A cost-oriented simulated route favors faster model families.",
                     true));
 
     private final Vertx vertx;
@@ -40,6 +46,14 @@ public final class SimulatedProvider implements AiProvider {
     @Override
     public List<ModelProfile> modelProfiles() {
         return PROFILES;
+    }
+
+    @Override
+    public ModelProfile requireModelProfile(String id) {
+        if ("router-balanced".equals(id)) {
+            return PROFILES.get(1);
+        }
+        return AiProvider.super.requireModelProfile(id);
     }
 
     @Override
@@ -73,6 +87,11 @@ public final class SimulatedProvider implements AiProvider {
     private static SafeRoute route(ProviderRequest request, ModelProfile profile) {
         if (!profile.router()) {
             return new SafeRoute("fixed", "Fixed");
+        }
+        if ("cost".equals(profile.strategy())) {
+            return request.ordinal() % 4 == 0
+                    ? new SafeRoute("general", "General")
+                    : new SafeRoute("fast", "Fast");
         }
         return switch (request.workload()) {
             case CHAT -> request.ordinal() % 5 == 0

@@ -1,5 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createRun, EMPTY_SNAPSHOT, normalizeConfig, normalizeSnapshot, reduceStreamMessage } from './api'
+import {
+  createRun,
+  EMPTY_SNAPSHOT,
+  getComparison,
+  normalizeComparison,
+  normalizeComparisonReceipt,
+  normalizeConfig,
+  normalizeSnapshot,
+  preferNewerSnapshot,
+  reduceStreamMessage,
+  startComparison,
+  stopComparison,
+} from './api'
 
 const backendSnapshot = {
   sessionId: 'session-01',
@@ -100,6 +112,32 @@ describe('backend contract normalization', () => {
     expect(config.defaults).toMatchObject({ modelId: 'router-balanced', modelProfile: 'router-balanced' })
   })
 
+  it('normalizes the bounded comparison config and safe profile metadata', () => {
+    const config = normalizeConfig({
+      mode: 'foundry',
+      comparison: {
+        enabled: true,
+        profiles: [
+          { id: 'fixed', label: 'Fixed deployment', kind: 'fixed' },
+          { id: 'router-default', label: 'Router default', kind: 'router', routeStrategy: 'balanced' },
+        ],
+        maxTrafficPerProfile: 4,
+        providerInvocationLimit: 12,
+      },
+    })
+
+    expect(config.comparison).toEqual({
+      enabled: true,
+      profiles: [
+        expect.objectContaining({ id: 'fixed', label: 'Fixed deployment', kind: 'fixed' }),
+        expect.objectContaining({ id: 'router-default', kind: 'router', routeStrategy: 'balanced' }),
+      ],
+      maxTrafficPerProfile: 4,
+      providerInvocationLimit: 12,
+      unavailableReason: undefined,
+    })
+  })
+
   it('derives display KPIs and trace metadata from a snapshot', () => {
     const snapshot = normalizeSnapshot(backendSnapshot)
     const values = Object.fromEntries(snapshot.kpis.map((kpi) => [kpi.key, kpi.value]))
@@ -163,6 +201,206 @@ describe('backend contract normalization', () => {
 
     expect(running.run?.status).toBe('running')
     expect(completed.run).toBeNull()
+  })
+
+  it('retains lastRun and normalizes a full comparison without sensitive payload fields', () => {
+    const snapshot = normalizeSnapshot({
+      lastRun: { runId: 'run-previous', status: 'completed', workload: 'chat' },
+      comparison: {
+        comparisonId: 'comparison-1',
+        status: 'completed',
+        workload: 'chat',
+        scenario: 'healthy',
+        trafficPerProfile: 2,
+        profiles: ['fixed', 'router-default'],
+        plannedRequests: 4,
+        providerInvocations: 4,
+        providerInvocationLimit: 6,
+        prompt: 'must-not-export',
+        responseBody: 'must-not-export-either',
+        phases: [{
+          profile: 'fixed',
+          label: 'Fixed deployment',
+          kind: 'fixed',
+          status: 'completed',
+          runId: 'run-fixed',
+          requested: 2,
+          completed: 2,
+          failed: 0,
+          retries: 0,
+          successRate: 1,
+          p50LatencyMs: 100,
+          p95LatencyMs: 180,
+          inputTokens: 20,
+          outputTokens: 10,
+          tokenSamples: 2,
+          models: [{ modelFamily: 'gpt-4o', count: 2, percentage: 1 }],
+          promptBody: 'also-private',
+        }],
+      },
+    })
+
+    expect(snapshot.lastRun).toMatchObject({ id: 'run-previous', status: 'completed' })
+    expect(snapshot.comparison).toMatchObject({
+      comparisonId: 'comparison-1',
+      status: 'completed',
+      profiles: ['fixed', 'router-default'],
+      phases: [{ successRate: 1, models: [{ modelFamily: 'gpt-4o', percentage: 1 }] }],
+    })
+    expect(JSON.stringify(snapshot.comparison)).not.toContain('must-not-export')
+    expect(JSON.stringify(snapshot.comparison)).not.toContain('also-private')
+  })
+
+  it('clears a comparison only when the snapshot explicitly sends null', () => {
+    const comparison = normalizeComparison({
+      comparisonId: 'comparison-1',
+      status: 'running',
+      workload: 'chat',
+      trafficPerProfile: 2,
+      profiles: ['fixed'],
+      plannedRequests: 2,
+      providerInvocations: 1,
+      providerInvocationLimit: 3,
+      phases: [],
+    })
+    const running = normalizeSnapshot({ comparison })
+    const unchanged = normalizeSnapshot({ capturedAt: '2026-07-17T00:00:00Z' }, running)
+    const cleared = normalizeSnapshot({ comparison: null }, running)
+
+    expect(unchanged.comparison?.comparisonId).toBe('comparison-1')
+    expect(cleared.comparison).toBeNull()
+  })
+
+  it('clears the current profile when a comparison becomes terminal', () => {
+    const running = normalizeComparison({
+      comparisonId: 'comparison-terminal',
+      status: 'running',
+      currentProfile: 'router-advanced',
+      workload: 'chat',
+      trafficPerProfile: 1,
+      profiles: ['fixed', 'router-default', 'router-advanced'],
+      plannedRequests: 3,
+      providerInvocations: 3,
+      providerInvocationLimit: 10,
+      phases: [],
+    })
+    const completed = normalizeComparison({
+      comparisonId: 'comparison-terminal',
+      status: 'completed',
+      currentProfile: null,
+    }, running)
+
+    expect(completed?.status).toBe('completed')
+    expect(completed?.currentProfile).toBeUndefined()
+  })
+
+  it('does not let a late REST snapshot regress newer SSE comparison progress', () => {
+    const completed = normalizeSnapshot({
+      sessionId: 'session-compare',
+      generatedAt: '2026-07-17T01:00:05Z',
+      comparison: {
+        comparisonId: 'comparison-1',
+        status: 'completed',
+        workload: 'chat',
+        trafficPerProfile: 1,
+        profiles: ['fixed', 'router-default', 'router-advanced'],
+        plannedRequests: 3,
+        providerInvocations: 3,
+        providerInvocationLimit: 10,
+        phases: [],
+      },
+    })
+    const stale = normalizeSnapshot({
+      sessionId: 'session-compare',
+      generatedAt: '2026-07-17T01:00:04Z',
+      comparison: {
+        comparisonId: 'comparison-1',
+        status: 'running',
+        workload: 'chat',
+        trafficPerProfile: 1,
+        profiles: ['fixed', 'router-default', 'router-advanced'],
+        plannedRequests: 3,
+        providerInvocations: 2,
+        providerInvocationLimit: 10,
+        phases: [],
+      },
+    })
+
+    expect(preferNewerSnapshot(completed, stale)).toBe(completed)
+    expect(preferNewerSnapshot(completed, {
+      ...stale,
+      capturedAt: '2026-07-17T01:00:06Z',
+    }).comparison?.status).toBe('completed')
+  })
+
+  it('normalizes direct comparison receipts', () => {
+    expect(normalizeComparisonReceipt({
+      comparisonId: 'comparison-2',
+      status: 'queued',
+      profiles: ['fixed', 'router-default', 'router-advanced'],
+      trafficPerProfile: 3,
+      plannedRequests: 9,
+      providerInvocationLimit: 10,
+    })).toEqual({
+      comparisonId: 'comparison-2',
+      status: 'queued',
+      profiles: ['fixed', 'router-default', 'router-advanced'],
+      trafficPerProfile: 3,
+      plannedRequests: 9,
+      providerInvocationLimit: 10,
+    })
+  })
+
+  it('uses one comparison POST and typed stop/GET endpoints', async () => {
+    const fullComparison = {
+      comparisonId: 'comparison-3',
+      status: 'completed',
+      workload: 'chat',
+      scenario: 'healthy',
+      trafficPerProfile: 2,
+      profiles: ['fixed'],
+      plannedRequests: 2,
+      providerInvocations: 2,
+      providerInvocationLimit: 3,
+      phases: [],
+    }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        comparisonId: 'comparison-3',
+        status: 'queued',
+        profiles: ['fixed'],
+        trafficPerProfile: 2,
+        plannedRequests: 2,
+        providerInvocationLimit: 3,
+      }), { status: 202, headers: { 'Content-Type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ comparisonId: 'comparison-3', status: 'stopped' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...fullComparison, prompt: 'private' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const receipt = await startComparison({ workload: 'chat', scenario: 'healthy', traffic: 2, prompt: 'same input' })
+    const stopped = await stopComparison('comparison-3')
+    const exported = await getComparison('comparison-3')
+
+    expect(receipt).toMatchObject({ comparisonId: 'comparison-3', plannedRequests: 2 })
+    expect(stopped).toMatchObject({ comparisonId: 'comparison-3', status: 'stopped' })
+    expect(exported).toMatchObject({ comparisonId: 'comparison-3', status: 'completed' })
+    expect(JSON.stringify(exported)).not.toContain('private')
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/comparisons')
+    expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toEqual({
+      workload: 'chat',
+      scenario: 'healthy',
+      traffic: 2,
+      prompt: 'same input',
+    })
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/v1/comparisons/comparison-3/stop')
+    expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/v1/comparisons/comparison-3')
   })
 
   it('does not present retrying or stopped traces as successful', () => {
