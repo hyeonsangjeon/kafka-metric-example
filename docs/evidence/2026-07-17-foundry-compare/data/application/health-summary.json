@@ -1,0 +1,7 @@
+{
+  "status": "ok",
+  "provider": "foundry",
+  "transport": "memory",
+  "ready": true,
+  "apiVersion": "v1"
+}

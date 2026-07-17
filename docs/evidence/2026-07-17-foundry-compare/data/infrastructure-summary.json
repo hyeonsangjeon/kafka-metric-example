@@ -1,0 +1,98 @@
+{
+  "capturedAtUtc": "2026-07-17T03:47:10Z",
+  "scope": {
+    "resourceGroup": "resource-group-demo",
+    "location": "eastus2",
+    "managedBy": "kafka-metric-example-infra",
+    "expiresOn": "2026-07-24"
+  },
+  "resources": [
+    {
+      "name": "foundry-account-demo",
+      "type": "Microsoft.CognitiveServices/accounts",
+      "kind": "AIServices",
+      "state": "Succeeded"
+    },
+    {
+      "name": "foundry-account-demo/foundry-project-demo",
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "identity": "SystemAssigned",
+      "state": "Succeeded"
+    },
+    {
+      "name": "log-analytics-demo",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "state": "Succeeded"
+    },
+    {
+      "name": "application-insights-demo",
+      "type": "Microsoft.Insights/components",
+      "kind": "web",
+      "state": "Succeeded"
+    },
+    {
+      "name": "Application Insights Smart Detection",
+      "type": "Microsoft.Insights/actiongroups",
+      "location": "global"
+    }
+  ],
+  "foundryAccount": {
+    "localAuthDisabled": true,
+    "projectManagementEnabled": true,
+    "publicNetworkAccess": "Enabled",
+    "deployments": [
+      {
+        "name": "gpt-5.4-mini",
+        "model": "gpt-5.4-mini",
+        "version": "2026-03-17",
+        "sku": "GlobalStandard",
+        "capacity": 10,
+        "strategy": "fixed"
+      },
+      {
+        "name": "model-router-default",
+        "model": "model-router",
+        "version": "2025-11-18",
+        "sku": "GlobalStandard",
+        "capacity": 10,
+        "strategy": "balanced",
+        "modelSubset": "all-supported-models"
+      },
+      {
+        "name": "model-router-cost",
+        "model": "model-router",
+        "version": "2025-11-18",
+        "sku": "GlobalStandard",
+        "capacity": 10,
+        "strategy": "cost",
+        "modelSubset": [
+          "gpt-5.4-nano:2026-03-17",
+          "gpt-5.4-mini:2026-03-17",
+          "gpt-5.4:2026-03-05"
+        ]
+      }
+    ]
+  },
+  "observability": {
+    "logAnalyticsRetentionDays": 30,
+    "logAnalyticsDailyQuotaGb": 0.1,
+    "applicationInsightsIngestionMode": "LogAnalytics",
+    "foundryMonitoringConnection": "appinsights-demo"
+  },
+  "verification": {
+    "result": "41/41 passed",
+    "readOnly": true,
+    "modelCallsDuringVerification": 0
+  },
+  "redacted": [
+    "subscription ID",
+    "tenant ID",
+    "principal IDs",
+    "role-assignment IDs",
+    "resource IDs",
+    "connection strings",
+    "access tokens",
+    "endpoint URLs",
+    "resource names (normalized)"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "workload": "chat",
+  "scenario": "healthy",
+  "traffic": 1,
+  "prompt": "Explain one practical Kafka reliability signal in two concise sentences."
+}

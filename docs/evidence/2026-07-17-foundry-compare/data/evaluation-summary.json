@@ -1,0 +1,76 @@
+{
+  "capturedAtUtc": "2026-07-17T03:46:02Z",
+  "sampleSize": 1,
+  "directionalOnly": true,
+  "datasetCategory": "synthetic Kafka runbook",
+  "authentication": "Microsoft Entra",
+  "toolkit": {
+    "repository": "microsoft-foundry/Model-Router-Auto-Evaluation",
+    "revision": "ecf0aa26b4b613536a2ecb23ac1231b380c064f1",
+    "tree": "599225a9e437e016044aa75fd8d8d60d09205b49",
+    "requestConcurrency": 1,
+    "judgeConcurrency": 1,
+    "requestAttempts": 5,
+    "judgeAttempts": 5
+  },
+  "localEvaluation": {
+    "defaultRouter": {
+      "selectedModel": "grok-4-1-fast-reasoning",
+      "routerRequests": 1,
+      "routerErrors": 0,
+      "routerLatencyMs": 12186.01,
+      "baselineLatencyMs": 4617.46,
+      "routerVisibleOutputCharacters": 3240,
+      "routerAbsoluteQuality": 4.0,
+      "baselineAbsoluteQuality": 5.0,
+      "pairwiseWinner": "baseline"
+    },
+    "advancedCostRouter": {
+      "selectedModel": "gpt-5.4-nano-2026-03-17",
+      "routerRequests": 1,
+      "routerErrors": 0,
+      "routerLatencyMs": 9061.79,
+      "baselineLatencyMs": 6374.5,
+      "routerVisibleOutputCharacters": 0,
+      "routerCompletionTokens": 1024,
+      "routerAbsoluteQuality": 1.0,
+      "baselineAbsoluteQuality": 4.75,
+      "pairwiseWinner": "baseline",
+      "observation": "The longer runbook prompt exhausted its completion-token budget without visible answer text. A separate shorter curated prompt returned a visible nano response."
+    }
+  },
+  "managedFoundryEvaluation": {
+    "defaultRouter": {
+      "status": "completed",
+      "items": 1,
+      "errored": 0,
+      "passedAllCriteria": 0,
+      "qualityAbsoluteRouter": 4.0,
+      "qualityAbsoluteBaseline": 4.0,
+      "qualityPairwise": 2.0,
+      "latencyComparison": 0.0
+    },
+    "advancedCostRouter": {
+      "status": "completed",
+      "items": 1,
+      "errored": 0,
+      "passedAllCriteria": 0,
+      "qualityAbsoluteRouter": 1.0,
+      "qualityAbsoluteBaseline": 4.0,
+      "qualityPairwise": 1.0,
+      "latencyComparison": 0.289
+    },
+    "interpretation": "Both evaluation jobs completed without grader errors; the one-item records did not pass every configured quality/pairwise/latency criterion."
+  },
+  "cost": {
+    "status": "unavailable",
+    "reason": "Verified prices are not available for every route in the pinned toolkit, so no cost conclusion is emitted."
+  },
+  "artifacts": {
+    "defaultCharts": 5,
+    "advancedCharts": 5,
+    "bulkRawResultsCommitted": false,
+    "evaluationAndRunIdsCommitted": false,
+    "portalUrlsCommitted": false
+  }
+}

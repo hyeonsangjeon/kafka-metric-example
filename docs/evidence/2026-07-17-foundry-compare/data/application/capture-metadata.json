@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-07-17T03:37:26Z",
+  "source": "loopback application API",
+  "sourceVersion": "v1.2.0",
+  "sourceCommit": "6950b5265a6f58de6a0a52897505989a3d7fe1e3",
+  "sourceArtifact": "ghcr.io/hyeonsangjeon/kafka-metric-example@sha256:671aac617933abbc35d3bc06b0ab695f83bf6d9e4090217e4a630cf19c068789",
+  "comparisonStatus": "completed",
+  "identifiersNormalized": true,
+  "syntheticOrPublicPromptRequired": true,
+  "rawSnapshotRetained": false,
+  "providerResponseBodiesRetained": false
+}
