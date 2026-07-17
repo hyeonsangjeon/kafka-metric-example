@@ -38,10 +38,12 @@ readonly ROUTER_MODEL_VERSION="2025-11-18"
 readonly MODEL_SKU="GlobalStandard"
 readonly MODEL_CAPACITY="10"
 
+# Keep this ownership sentinel stable so cleanup remains safe for resource
+# groups created before the repository was renamed to foundry-stream-lab.
 readonly MANAGED_BY_TAG="kafka-metric-example-infra"
 readonly LEGACY_MANAGED_BY_TAG="codex"
 readonly PURPOSE_TAG="model-router-demo"
-readonly REPOSITORY_TAG="${AZURE_REPOSITORY_TAG:-kafka-metric-example}"
+readonly REPOSITORY_TAG="${AZURE_REPOSITORY_TAG:-foundry-stream-lab}"
 readonly EXPIRES_ON_TAG="${AZURE_EXPIRES_ON:-$(default_expiry_date)}"
 readonly DEPLOYMENT_NAME="${AZURE_DEPLOYMENT_NAME:-kafka-router-demo-infra}"
 readonly ACCOUNT_API_VERSION="2026-03-01"

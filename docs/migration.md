@@ -35,5 +35,9 @@ never accepted by the new core.
 
 The original dashboard was derived from the Apache Vert.x
 `vertx-examples/kafka-examples` project and included third-party UI assets. The
-rewrite carries forward the Apache-2.0 license and `NOTICE`, but copies none of
-the legacy JavaScript, Java source, templates, images, or fonts.
+2026 rewrite copies none of the legacy JavaScript, Java source, templates,
+images, or fonts. Project-authored files in the current tree are MIT-licensed;
+`NOTICE` and `LICENSES/Apache-2.0.txt` preserve the earlier lineage and terms.
+Historical revisions and releases through `v1.2.0` remain under the license
+that accompanied them, and all third-party dependencies retain their own
+licenses.

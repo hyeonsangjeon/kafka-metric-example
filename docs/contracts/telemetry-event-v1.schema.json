@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/hyeonsangjeon/kafka-metric-example/blob/master/docs/contracts/telemetry-event-v1.schema.json",
+  "$id": "https://github.com/hyeonsangjeon/foundry-stream-lab/blob/master/docs/contracts/telemetry-event-v1.schema.json",
   "title": "Foundry Stream Lab telemetry event v1",
   "description": "Privacy-safe lifecycle metadata published to Kafka. Raw AI payloads and infrastructure identifiers are forbidden by this contract.",
   "type": "object",

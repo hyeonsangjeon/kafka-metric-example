@@ -22,3 +22,9 @@ mode fully functional without cloud credentials.
 
 Please use conventional, intent-focused commit messages and keep unrelated
 refactors out of feature pull requests.
+
+## Contribution license
+
+By submitting a contribution, you agree that it may be distributed under the
+project's [MIT License](LICENSE). Third-party code must retain its original
+license and attribution.

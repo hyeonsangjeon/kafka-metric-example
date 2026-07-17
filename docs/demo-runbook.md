@@ -193,9 +193,9 @@ Before deletion:
 1. Run the released application and capture its allowlisted comparison result:
 
    ```bash
-   export SOURCE_VERSION='v1.2.0'
-   export SOURCE_COMMIT="$(git rev-parse 'v1.2.0^{commit}')"
-   export SOURCE_ARTIFACT='ghcr.io/hyeonsangjeon/kafka-metric-example@sha256:RELEASE_DIGEST'
+   export SOURCE_VERSION='v1.3.0'
+   export SOURCE_COMMIT="$(git rev-parse 'v1.3.0^{commit}')"
+   export SOURCE_ARTIFACT='ghcr.io/hyeonsangjeon/foundry-stream-lab@sha256:RELEASE_DIGEST'
    ./tools/evidence/capture_comparison.sh \
      docs/evidence/YYYY-MM-DD-foundry-compare/data/application
    ```

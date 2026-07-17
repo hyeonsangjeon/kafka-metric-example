@@ -50,14 +50,19 @@ currently selected `az` account; inspect and set it before `--apply`.
 All managed resources carry these tags:
 
 ```text
-application=kafka-metric-example
+application=foundry-stream-lab
 environment=demo
 managed-by=kafka-metric-example-infra
 purpose=model-router-demo
 cleanup=resource-group
-repository=kafka-metric-example
+repository=foundry-stream-lab
 expires-on=<UTC date seven days after provisioning>
 ```
+
+The `managed-by` value intentionally remains stable across the repository
+rename so existing demo resource groups can still pass the guarded cleanup
+check. New runs use `foundry-stream-lab` for the application and repository
+tags.
 
 Set `AZURE_EXPIRES_ON=YYYY-MM-DD` to override that advisory expiry tag. The tag
 does not schedule deletion; cleanup remains an explicit guarded operation.
