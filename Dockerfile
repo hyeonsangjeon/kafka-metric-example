@@ -7,6 +7,8 @@ RUN npm run build
 
 FROM maven:3.9.15-eclipse-temurin-21 AS java-build
 WORKDIR /workspace/app
+COPY LICENSE NOTICE THIRD_PARTY_NOTICES.md /workspace/
+COPY LICENSES /workspace/LICENSES
 COPY app/pom.xml ./
 RUN mvn --batch-mode --no-transfer-progress -DskipTests package \
     && rm -rf target
@@ -15,16 +17,20 @@ COPY --from=web-build /workspace/web/dist ./src/main/resources/webroot
 RUN mvn --batch-mode --no-transfer-progress -DskipTests package
 
 FROM eclipse-temurin:21-jre-ubi10-minimal
-LABEL org.opencontainers.image.source="https://github.com/hyeonsangjeon/kafka-metric-example" \
+LABEL org.opencontainers.image.source="https://github.com/hyeonsangjeon/foundry-stream-lab" \
       org.opencontainers.image.title="Foundry Stream Lab" \
       org.opencontainers.image.description="Privacy-safe Microsoft Foundry workload telemetry over Kafka and Vert.x" \
-      org.opencontainers.image.licenses="Apache-2.0"
+      org.opencontainers.image.licenses="MIT"
 RUN groupadd --gid 10001 streamlab \
     && useradd --uid 10001 --gid streamlab --no-create-home \
       --home-dir /nonexistent --shell /bin/false streamlab
 WORKDIR /app
 COPY --from=java-build --chown=streamlab:streamlab \
   /workspace/app/target/foundry-stream-lab.jar /app/foundry-stream-lab.jar
+COPY --from=java-build --chown=streamlab:streamlab \
+  /workspace/LICENSE /workspace/NOTICE /workspace/THIRD_PARTY_NOTICES.md /licenses/
+COPY --from=java-build --chown=streamlab:streamlab \
+  /workspace/LICENSES /licenses/history
 
 USER 10001:10001
 EXPOSE 8080

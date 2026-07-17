@@ -1,10 +1,16 @@
 Foundry Stream Lab
 Copyright 2019-2026 Hyeonsang Jeon
 
-This repository began as a dashboard derived from the Apache Vert.x
-`vertx-examples/kafka-examples` project. The 2026 rewrite removed the legacy
-source code and bundled third-party UI assets, while retaining this notice to
-preserve project provenance.
+Project-authored files in the current rewritten tree are licensed under the
+MIT License. This repository began as a dashboard derived from the Apache
+Vert.x `vertx-examples/kafka-examples` project. The 2026 rewrite removed the
+legacy source code and bundled third-party UI assets while retaining this
+notice to preserve project provenance.
+
+Historical revisions and releases through v1.2.0 remain under the license that
+accompanied them. The canonical Apache License 2.0 text is retained at
+LICENSES/Apache-2.0.txt. Third-party components retain their own licenses; see
+THIRD_PARTY_NOTICES.md and the license metadata packaged with build artifacts.
 
 Apache Vert.x and Apache Kafka are trademarks of their respective owners.
 Microsoft Foundry is a trademark of Microsoft Corporation. This project is an

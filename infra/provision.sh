@@ -146,7 +146,7 @@ if resource_group_exists; then
   az group update \
     --name "$RESOURCE_GROUP" \
     --tags \
-      application=kafka-metric-example \
+      application=foundry-stream-lab \
       environment=demo \
       managed-by="$MANAGED_BY_TAG" \
       purpose="$PURPOSE_TAG" \
@@ -161,7 +161,7 @@ else
     --name "$RESOURCE_GROUP" \
     --location "$LOCATION" \
     --tags \
-      application=kafka-metric-example \
+      application=foundry-stream-lab \
       environment=demo \
       managed-by="$MANAGED_BY_TAG" \
       purpose="$PURPOSE_TAG" \
@@ -246,7 +246,7 @@ tags_json="$(jq -cn \
   --arg purpose "$PURPOSE_TAG" \
   --arg repository "$REPOSITORY_TAG" \
   --arg expiresOn "$EXPIRES_ON_TAG" \
-  '{application:"kafka-metric-example",environment:"demo","managed-by":$managedBy,purpose:$purpose,cleanup:"resource-group",repository:$repository,"expires-on":$expiresOn}')"
+  '{application:"foundry-stream-lab",environment:"demo","managed-by":$managedBy,purpose:$purpose,cleanup:"resource-group",repository:$repository,"expires-on":$expiresOn}')"
 az deployment group create \
   --name "$DEPLOYMENT_NAME" \
   --resource-group "$RESOURCE_GROUP" \

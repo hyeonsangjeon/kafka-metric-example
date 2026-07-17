@@ -11,9 +11,9 @@ Usage:
 Optional environment:
   BASE_URL=http://127.0.0.1:8080
   EXPECTED_PROVIDER_MODE=foundry
-  SOURCE_VERSION=v1.2.0
+  SOURCE_VERSION=v1.3.0
   SOURCE_COMMIT=0123456789abcdef0123456789abcdef01234567
-  SOURCE_ARTIFACT=git:v1.2.0
+  SOURCE_ARTIFACT=git:v1.3.0
   COMPARISON_WORKLOAD=chat
   COMPARISON_SCENARIO=healthy
   COMPARISON_TRAFFIC=1
@@ -59,7 +59,7 @@ base_url="${base_url%/}"
   || die "EXPECTED_PROVIDER_MODE must be foundry or simulated"
 if [[ "$expected_provider_mode" == "foundry" ]]; then
   [[ "$source_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
-    || die "SOURCE_VERSION must be a release tag such as v1.2.0"
+    || die "SOURCE_VERSION must be a release tag such as v1.3.0"
   [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]] \
     || die "SOURCE_COMMIT must be a full lowercase Git commit SHA"
   [[ "$source_artifact" =~ ^(git:v[0-9]+\.[0-9]+\.[0-9]+|ghcr\.io/[a-z0-9._/-]+@sha256:[0-9a-f]{64})$ ]] \

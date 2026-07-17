@@ -1,25 +1,30 @@
 # Foundry Stream Lab
 
-Compare a fixed model with both the default Balanced Model Router and a custom
-Cost/Quality router on the same bounded AI workload, inject one reliability
-failure, and watch privacy-safe telemetry move through Kafka in real time.
+[![CI](https://github.com/hyeonsangjeon/foundry-stream-lab/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/hyeonsangjeon/foundry-stream-lab/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/hyeonsangjeon/foundry-stream-lab)](https://github.com/hyeonsangjeon/foundry-stream-lab/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Foundry Stream Lab is a complete rebuild of the original Kafka metrics demo.
-It keeps the useful idea—`event -> Kafka -> projection -> live dashboard`—and
-replaces the 2019-era runtime and vendored admin theme with a focused Microsoft
-Foundry routing, evaluation, and observability lab.
+**A local-first lab for separating AI model-routing latency from Kafka delivery
+failures.**
 
-![Completed three-profile Compare Run in the deterministic simulator](docs/design/compare-run-simulator-desktop.jpg)
+Replay one unchanged workload across **Fixed → Default/Balanced →
+Advanced/Cost or Quality** profiles. Inject model throttling, consumer slowdown,
+duplicate delivery, or a hot partition, then compare p50/p95 latency, retries,
+tokens, model mix, Kafka lag, and partition skew in a privacy-safe live
+dashboard.
 
-The screen above is the credential-free simulator path. A disposable 2026-07-16
-Foundry environment was also captured before cleanup. Start with the
-[live evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md),
-follow [the presenter runbook](docs/demo-runbook.md), or inspect the
-[HTTP input/output examples](docs/api-examples.md). The bundle includes actual
-fixed/default/advanced screenshots, sanitized routing and token telemetry,
-managed tracing and Evaluation aggregates, Azure Monitor usage, 12 evaluation
-charts, one curated synthetic model I/O example, checksums, and the resource
-cleanup record.
+- **Zero-cloud default:** deterministic simulator, Kafka KRaft, and the React
+  dashboard through Docker Compose.
+- **Local model:** Ollama through its OpenAI-compatible Responses API as a
+  fixed-model profile.
+- **Real routing:** Microsoft Foundry fixed and Model Router deployments, with
+  evaluation, managed tracing, and sanitized evidence tooling.
+
+[Try it locally](#quick-start) ·
+[See a real Foundry Compare Run](docs/evidence/2026-07-17-foundry-compare/README.md) ·
+[Follow the demo runbook](docs/demo-runbook.md)
+
+![Completed three-profile Compare Run](docs/design/compare-run-simulator-desktop.jpg)
 
 ## Why this exists
 
@@ -62,9 +67,9 @@ Stable releases are published for both `linux/amd64` and `linux/arm64` with an
 SBOM and provenance attestation:
 
 ```bash
-docker pull ghcr.io/hyeonsangjeon/kafka-metric-example:1.2.0
+docker pull ghcr.io/hyeonsangjeon/foundry-stream-lab:1.3.0
 docker run --rm -p 127.0.0.1:8080:8080 \
-  ghcr.io/hyeonsangjeon/kafka-metric-example:1.2.0
+  ghcr.io/hyeonsangjeon/foundry-stream-lab:1.3.0
 ```
 
 The standalone image uses the deterministic simulator and in-memory telemetry
@@ -82,6 +87,18 @@ transport by default. Use the Compose quick start for the complete Kafka path.
    **Model throttling** to inspect the bounded retry in trace details.
 
 See [the scenario guide](docs/scenarios.md) for a presenter-ready script.
+
+## Verified live evidence
+
+The [v1.2.0 Foundry Compare Run bundle](docs/evidence/2026-07-17-foundry-compare/README.md)
+preserves a real fixed/default/advanced run, responsive screenshots, allowlisted
+API input/output, curated model responses, local and managed evaluation charts,
+content-redacted tracing, Azure Monitor usage, release provenance, checksums,
+and the verified resource deletion/purge record. It uses only synthetic prompts
+and normalizes cloud resource names and locator IDs.
+
+The earlier [single-profile live capture](docs/evidence/2026-07-16-foundry-live/README.md)
+remains available as historical evidence.
 
 ## Architecture
 
@@ -200,7 +217,7 @@ wrapper around Microsoft's Model Router Auto Evaluation toolkit under
 `tools/foundry/`. See [the Foundry guide](docs/foundry.md) for the complete live
 workflow and the boundaries of the recorded verification; the aggregate benchmark
 is recorded in [the live evaluation note](docs/live-evaluation.md), with its
-sanitized artifacts in the [evidence bundle](docs/evidence/2026-07-16-foundry-live/README.md).
+sanitized artifacts in the [Compare Run evidence bundle](docs/evidence/2026-07-17-foundry-compare/README.md).
 
 ## Privacy boundary
 
@@ -264,8 +281,19 @@ a local reliability lab, not a production Kafka, identity, or multi-tenant
 deployment template. Production boundaries are documented in
 [SECURITY.md](SECURITY.md).
 
+## Project history
+
+Foundry Stream Lab is a complete 2026 rebuild of the original Kafka metrics
+demo. It keeps the useful `event -> Kafka -> projection -> live dashboard`
+idea while replacing the legacy Java/runtime path and vendored admin theme with
+a focused Microsoft Foundry routing, evaluation, and observability lab. See
+[the migration and provenance note](docs/migration.md).
+
 ## License and provenance
 
-Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). The rebuild credits the
-original Vert.x example lineage while removing the old vendored UI assets and
-their ambiguous redistribution surface.
+The current rewritten source tree is licensed under the [MIT License](LICENSE).
+[NOTICE](NOTICE) preserves the original Vert.x example lineage, and
+[third-party notices](THIRD_PARTY_NOTICES.md) cover distributed dependencies.
+Historical revisions and releases through `v1.2.0` remain under the license
+that accompanied them; the canonical Apache-2.0 text is retained under
+[`LICENSES`](LICENSES/Apache-2.0.txt).
