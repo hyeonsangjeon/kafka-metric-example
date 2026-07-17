@@ -5,19 +5,111 @@ updates:
     schedule:
       interval: weekly
     groups:
+      foundry-sdk:
+        patterns:
+          - "com.azure:azure-ai-agents"
+        update-types:
+          - patch
+      azure-support:
+        patterns:
+          - "com.azure:*"
+        exclude-patterns:
+          - "com.azure:azure-ai-agents"
+        update-types:
+          - minor
+          - patch
+      java-jackson:
+        patterns:
+          - "com.fasterxml.jackson.*:*"
+        update-types:
+          - patch
       java-runtime:
-        patterns: ["*"]
+        dependency-type: production
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "com.azure:*"
+          - "com.fasterxml.jackson.*:*"
+        update-types:
+          - minor
+          - patch
+      java-build:
+        dependency-type: development
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "*:*"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "com.azure:azure-ai-agents"
+        update-types:
+          - "version-update:semver-minor"
+      - dependency-name: "com.fasterxml.jackson.core:jackson-databind"
+        update-types:
+          - "version-update:semver-minor"
   - package-ecosystem: npm
     directory: /web
     schedule:
       interval: weekly
     groups:
       frontend-runtime:
-        patterns: ["*"]
+        dependency-type: production
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+      frontend-lint:
+        dependency-type: development
+        patterns:
+          - "@eslint/*"
+          - "eslint"
+          - "eslint-plugin-*"
+          - "globals"
+          - "typescript-eslint"
+        update-types:
+          - minor
+          - patch
+      frontend-types:
+        dependency-type: development
+        patterns:
+          - "@types/*"
+          - "typescript"
+        update-types:
+          - minor
+          - patch
+      frontend-tooling:
+        dependency-type: development
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "eclipse-temurin"
+        update-types:
+          - "version-update:semver-major"
+      # Maven image tags combine Maven and JDK versions, so keep Java 21
+      # upgrades deliberate instead of accepting an unrelated JDK migration.
+      - dependency-name: "maven"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
   - package-ecosystem: github-actions
     directory: /
     schedule:
