@@ -1,0 +1,43 @@
+{
+  "status": "completed-and-verified",
+  "resourceScope": {
+    "resourceGroup": "resource-group-demo",
+    "foundryAccount": "foundry-account-demo",
+    "location": "eastus2",
+    "resourceNamesNormalized": true,
+    "boundary": "dedicated demo resource group"
+  },
+  "evidencePublication": {
+    "pullRequest": "https://github.com/hyeonsangjeon/kafka-metric-example/pull/20",
+    "mergedAtUtc": "2026-07-17T04:03:26Z",
+    "mergeCommit": "2de6f6895572ebea2d52a099b8721d9052c6733f",
+    "remoteMasterFileCount": 29,
+    "remoteMasterChecksumsVerified": 28
+  },
+  "dryRun": {
+    "completed": true,
+    "purgeIncluded": true,
+    "writeOperations": 0
+  },
+  "apply": {
+    "acceptedAtUtc": "2026-07-17T04:03:54Z",
+    "completedAtUtc": "2026-07-17T04:05:38Z",
+    "resourceGroupDeletion": true,
+    "foundryAccountPurge": true,
+    "exitCode": 0
+  },
+  "postCleanupVerification": {
+    "verifiedAtUtc": "2026-07-17T04:06:29Z",
+    "independentRecheckAtUtc": "2026-07-17T04:08:13Z",
+    "resourceGroupExists": false,
+    "softDeletedFoundryAccountMatches": 0,
+    "scopedRoleAssignments": 0,
+    "providerRegistrations": {
+      "Microsoft.CognitiveServices": "Registered",
+      "Microsoft.Insights": "Registered",
+      "Microsoft.OperationalInsights": "Registered"
+    },
+    "providerRegistrationsRetained": true
+  },
+  "gate": "Pre-delete evidence was merged and checksum-verified on origin/master before cleanup."
+}

@@ -94,10 +94,19 @@ Deliberately excluded:
 
 The screenshots retain only shortened, non-resolvable application child-run
 fragments shown by the product UI; no full application or cloud run handle is
-present. This pre-deletion bundle must be merged to the default branch before
-cleanup. After the dedicated resource group is deleted and the Foundry account
-is purged, a separate cleanup record will update this README, manifest, and
-checksums.
+present.
+
+## Cleanup verification
+
+The pre-deletion bundle was merged and checksum-verified on `origin/master`
+before cleanup. The dedicated resource group was then deleted and the Foundry
+account permanently purged. At `2026-07-17T04:06:29Z`, and again in an
+independent read-only check at `2026-07-17T04:08:13Z`, the resource group did
+not exist, the soft-deleted account match count and scoped role-assignment count
+were both zero, and the three subscription-level provider registrations were
+still `Registered` as intended. See
+[`cleanup-summary.json`](data/cleanup-summary.json) for the sanitized audit
+record.
 
 See [`manifest.json`](manifest.json) for provenance and `checksums.sha256` for
 artifact integrity.
