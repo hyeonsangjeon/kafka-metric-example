@@ -15,8 +15,8 @@ with exactly the fixed, default-router, and advanced-router profiles. Set
 Traffic is checked against the server's `maxTrafficPerProfile` before the POST,
 and only a completed comparison is publishable.
 Foundry captures also require `SOURCE_VERSION`, the full lowercase
-`SOURCE_COMMIT`, and a non-sensitive `SOURCE_ARTIFACT` such as the immutable GHCR
-digest. The tool rejects a completed run unless all three phases have zero
+`SOURCE_COMMIT`, and `SOURCE_ARTIFACT` in the form `git:vX.Y.Z` or an immutable
+`ghcr.io/...@sha256:...` digest. The tool rejects a completed run unless all three phases have zero
 failures, complete token samples, and a non-empty model mix.
 
 The capture retains:

@@ -62,8 +62,8 @@ if [[ "$expected_provider_mode" == "foundry" ]]; then
     || die "SOURCE_VERSION must be a release tag such as v1.2.0"
   [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]] \
     || die "SOURCE_COMMIT must be a full lowercase Git commit SHA"
-  [[ "$source_artifact" =~ ^[A-Za-z0-9._:/@+=-]{1,240}$ ]] \
-    || die "SOURCE_ARTIFACT must be a short non-sensitive artifact locator"
+  [[ "$source_artifact" =~ ^(git:v[0-9]+\.[0-9]+\.[0-9]+|ghcr\.io/[a-z0-9._/-]+@sha256:[0-9a-f]{64})$ ]] \
+    || die "SOURCE_ARTIFACT must be git:vX.Y.Z or an immutable GHCR sha256 digest"
 fi
 
 [[ "$traffic" =~ ^[1-9][0-9]*$ ]] || die "COMPARISON_TRAFFIC must be a positive integer"
@@ -112,8 +112,12 @@ comparison_id="$(jq -r '.comparisonId // empty' "${tmp_dir}/receipt.json")"
 [[ -n "$comparison_id" ]] || die "comparison receipt did not include comparisonId"
 
 terminal="false"
-for _ in {1..300}; do
-  curl "${curl_args[@]}" \
+poll_deadline=$((SECONDS + 300))
+while ((SECONDS < poll_deadline)); do
+  remaining_seconds=$((poll_deadline - SECONDS))
+  poll_timeout="$remaining_seconds"
+  ((poll_timeout > 15)) && poll_timeout=15
+  curl "${curl_args[@]}" --max-time "$poll_timeout" \
     "${base_url}/api/v1/comparisons/${comparison_id}" \
     >"${tmp_dir}/comparison.json"
   status="$(jq -r '.status // empty' "${tmp_dir}/comparison.json")"
@@ -126,7 +130,7 @@ for _ in {1..300}; do
       die "comparison ended with non-success status: ${status}"
       ;;
   esac
-  sleep 1
+  ((SECONDS < poll_deadline)) && sleep 1
 done
 [[ "$terminal" == "true" ]] || die "comparison did not become terminal within five minutes"
 jq -e '
