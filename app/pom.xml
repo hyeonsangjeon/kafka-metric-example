@@ -15,7 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <vertx.version>5.1.5</vertx.version>
     <kafka.version>4.3.1</kafka.version>
-    <azure.ai.agents.version>2.0.0</azure.ai.agents.version>
+    <azure.ai.agents.version>2.0.1</azure.ai.agents.version>
     <azure.identity.version>1.18.2</azure.identity.version>
     <jackson.databind.version>2.18.9</jackson.databind.version>
     <junit.version>5.12.2</junit.version>
