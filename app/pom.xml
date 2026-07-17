@@ -18,7 +18,7 @@
     <azure.ai.agents.version>2.0.0</azure.ai.agents.version>
     <azure.identity.version>1.18.2</azure.identity.version>
     <jackson.databind.version>2.18.9</jackson.databind.version>
-    <junit.version>5.12.2</junit.version>
+    <junit.version>5.14.4</junit.version>
   </properties>
 
   <dependencyManagement>
@@ -109,7 +109,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.15.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
           <parameters>true</parameters>
@@ -121,7 +121,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.3</version>
+        <version>3.5.6</version>
         <configuration>
           <useModulePath>false</useModulePath>
         </configuration>
@@ -129,7 +129,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <phase>package</phase>
