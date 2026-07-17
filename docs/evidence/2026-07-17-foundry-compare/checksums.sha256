@@ -1,4 +1,4 @@
-0f61dd7ebafa0f010a4cdf5e02774ce1a1881b49f3e0c32a861336e6dc14fd0d  ./README.md
+e99fae9a2ad73f2089ec2591d8dbedf467f05db9ebaf4daf895d601311785952  ./README.md
 8a75f612f777085c26707537e7e3111b5fd1545d30d46938d30dc2bffb468561  ./charts/advanced/chart_category_latency.png
 5d9e28f0505462d300a956f96c8e2390e37f027bcb7de49edc7b3e856c61f824  ./charts/advanced/chart_latency_comparison.png
 5523562ffa3b9524807439b12251c8d09b5186636353d094ac257a7ab814df97  ./charts/advanced/chart_latency_distribution.png
@@ -15,6 +15,7 @@ bb960e815d6ba39717040e0f6357c5f0dd96147b6bc0f61a0c52fcef52c72334  ./data/applica
 e920ab0b5a308f33694351c4fb3b64ee0e31f3a59c682a565e1080ced2e0f47a  ./data/application/comparison-result.json
 54432b48a54e6e58f213149988436e9826641cc474c769397d0dd1824a165624  ./data/application/configuration-summary.json
 4c0e5ad0f7c825f79a62d1a8bb244571069d24823e18c4a3e9f2832293565cbf  ./data/application/health-summary.json
+1c70380464dd56e65924ca1cdc51092d9bddf3e4ab5fe6585d61dd9c1c5178a2  ./data/cleanup-summary.json
 d124d9c9546bcaf3ad0eb023d27190ba339da59e54173215e924d92fe375a516  ./data/evaluation-summary.json
 a16964f0edd5af7af3f064fce3f2b2f9e52c04e59104446e8b5b0ab4a419b43c  ./data/infrastructure-summary.json
 0b171bd17927c46491f94cf922c28489eb1bdc23c85b56b3874899ae1ac791db  ./data/release-summary.json
@@ -22,7 +23,7 @@ a16964f0edd5af7af3f064fce3f2b2f9e52c04e59104446e8b5b0ab4a419b43c  ./data/infrast
 1a867fbf77d63f6a946a4caca358b37d0e3d3a4f18c2abcdacba0d84dd6fa435  ./data/usage-summary.json
 dc0ca2b2fa805dd1b1be7a5cac122584b2f3f5466f431b3048dd116c7a780802  ./examples/comparison-api-io.md
 b97f021796b77d51839ad5106b1f9c854f3ab998436cf8e7a10ad3fc5b6fc358  ./examples/curated-model-io.md
-ea9e0ab3c8cc87038030216b1cff55471e49ae2d8f96710eafda82b47ed62129  ./manifest.json
+280d36beccef267986db4582fe7fac6173b771191a2489aff93b410f84eeeaef  ./manifest.json
 ae1eee801d3220cb642781781c474e2267f29ac0d37f21939ff769daace54e2a  ./screenshots/live-foundry-compare-advanced-mobile.jpg
 0c6dc3389634dd3d0e5fb1a62600f968bcfbdaa56f94be364aad55b6f2076bff  ./screenshots/live-foundry-compare-desktop.jpg
 ac13d2be0b5c966b65ba8135ce0927241d535cb8d1fdda8c82ae885d0b06907c  ./screenshots/live-foundry-compare-mobile.jpg

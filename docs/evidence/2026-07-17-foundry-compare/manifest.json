@@ -40,7 +40,7 @@
     "screenshots": 3,
     "evaluationCharts": 10,
     "examples": 2,
-    "cleanupDataFiles": 0,
+    "cleanupDataFiles": 1,
     "checksums": "checksums.sha256"
   },
   "privacy": {
@@ -52,5 +52,6 @@
     "evaluationRunAndPortalLocatorsExcluded": true,
     "demoResourceNamesNormalized": true
   },
-  "cleanupStatus": "pending-pre-delete-evidence-merge"
+  "cleanupStatus": "data/cleanup-summary.json",
+  "cleanupVerifiedAtUtc": "2026-07-17T04:08:13Z"
 }
