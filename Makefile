@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help demo stop kafka test backend-test web-test build java-check
+.PHONY: help demo stop kafka test backend-test web-test repository-traffic repository-traffic-test build java-check
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Foundry Stream Lab\n\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -29,6 +29,19 @@ web-test: ## Run frontend lint, tests, and production build
 	cd web && npm run lint && npm run test -- --run && npm run build
 
 test: backend-test web-test ## Run all checks
+
+repository-traffic: ## Capture and classify the rolling GitHub traffic window
+	mkdir -p tmp/repository-traffic
+	python3 tools/github/traffic_attribution.py \
+		--repository hyeonsangjeon/foundry-stream-lab \
+		--legacy-repository hyeonsangjeon/kafka-metric-example \
+		--renamed-at 2026-07-17T05:39:55Z \
+		--output-json tmp/repository-traffic/snapshot.json \
+		--output-markdown tmp/repository-traffic/summary.md
+	@cat tmp/repository-traffic/summary.md
+
+repository-traffic-test: ## Run offline GitHub traffic attribution tests
+	python3 -m unittest discover -s tools/github/tests -p 'test_*.py'
 
 build: ## Build the production container
 	docker build -t foundry-stream-lab:local .

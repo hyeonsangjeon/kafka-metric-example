@@ -50,6 +50,8 @@ jobs:
           python-version: "3.12"
       - name: Test evaluation wrapper
         run: python -m unittest discover -s tools/eval/tests -p 'test_*.py'
+      - name: Test GitHub traffic attribution
+        run: python -m unittest discover -s tools/github/tests -p 'test_*.py'
       - name: Validate offline evaluation inputs
         run: python tools/eval/eval.py validate
       - name: Validate infrastructure sources
