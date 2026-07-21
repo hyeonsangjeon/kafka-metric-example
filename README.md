@@ -241,6 +241,7 @@ requires the Azure CLI; the Docker quick start does not.
 make test          # Java tests, frontend lint/tests/build
 make backend-test  # Maven verify
 make web-test      # ESLint, Vitest, Vite production build
+make repository-traffic-test  # Offline GitHub traffic attribution tests
 make build         # Production container image
 ```
 
@@ -254,6 +255,7 @@ For credential-free host development, start the backend with
 app/                 Java 21 / Vert.x API, providers, transport, projection
 web/                 React / TypeScript dashboard
 docs/                Architecture, scenarios, Foundry setup, event contract
+tools/               Evaluation, evidence, Foundry, and repository utilities
 compose.yaml         Kafka KRaft broker, topics, and application
 Dockerfile           Reproducible multi-stage production image
 .github/workflows/   Backend, frontend, and container CI
@@ -288,6 +290,12 @@ demo. It keeps the useful `event -> Kafka -> projection -> live dashboard`
 idea while replacing the legacy Java/runtime path and vendored admin theme with
 a focused Microsoft Foundry routing, evaluation, and observability lab. See
 [the migration and provenance note](docs/migration.md).
+
+The rename also means GitHub's rolling traffic window can contain both the old
+and canonical repository paths. The
+[repository traffic attribution guide](docs/repository-traffic.md) defines the
+separate metrics and the repeatable capture workflow; legacy-path views are not
+treated as new-name content interest.
 
 ## License and provenance
 
